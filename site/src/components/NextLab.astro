@@ -1,0 +1,41 @@
+---
+import { contract, labNumber, tracks } from '../lib/repo';
+import { url } from '../lib/url';
+
+interface Props {
+	current: string | number;
+}
+const current = labNumber(Astro.props.current);
+const order = tracks.full.labs as readonly string[];
+const next = order[order.indexOf(current) + 1];
+const labs = Object.fromEntries(
+	Object.entries(contract.labs).map(([n, l]) => [n, { href: url(l.slug), title: `Lab ${n}: ${l.title}` }]),
+);
+const trackLabs = Object.fromEntries(Object.entries(tracks).map(([k, t]) => [k, t.labs]));
+---
+
+<p class="next-lab not-content" data-current={current} data-labs={JSON.stringify(labs)} data-tracks={JSON.stringify(trackLabs)}>
+	{
+		next ? (
+			<>
+				Next: <a href={labs[next].href}>{labs[next].title}</a>
+			</>
+		) : (
+			<>
+				That's the last lab. See the <a href={url('roadmap')}>roadmap</a> for what comes next.
+			</>
+		)
+	}
+</p>
+
+<script>
+	import { TRACK_KEY, get } from '../lib/progress';
+	for (const el of document.querySelectorAll<HTMLElement>('p.next-lab')) {
+		const track = get(TRACK_KEY);
+		if (!track || track === 'full') continue;
+		const labs = JSON.parse(el.dataset.labs!);
+		const list: string[] = JSON.parse(el.dataset.tracks!)[track] ?? [];
+		const next = list.find((n) => n > el.dataset.current!);
+		if (next) el.innerHTML = `Next on your track: <a href="${labs[next].href}">${labs[next].title}</a>`;
+	}
+</script>

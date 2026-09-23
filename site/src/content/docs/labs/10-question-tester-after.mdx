@@ -1,0 +1,272 @@
+---
+title: "Lab 10: question-tester, after"
+description: "Run the question-tester agent again, grade the AI-ready model, and compare it with the baseline run."
+sidebar:
+  label: "10. question-tester, after"
+lab:
+  number: 10
+  durationMinutes: 30
+  level: intermediate
+  platforms: [windows]
+  requiresDesktop: true
+  surfaces: [vscode]
+  primitives: [custom-agent, prompt-file, mcp]
+  startCheckpoint: lab09-complete
+  endCheckpoint: none
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import WhatVaries from '~/components/WhatVaries.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+You improved names, relationships, measures, and AI metadata. Now you measure whether those changes helped. The question-tester agent answers the same five questions from Lab 05, writes another run file, and lets the grader score it the same way. This is still an agent run, so wording and sometimes a point can vary, but the AI-ready model should score clearly higher than the baseline.
+
+## Concepts
+
+- **After run:** a second graded question run against the AI-ready model. The label in this lab is `local-ai-ready`.
+- **Rubric:** deterministic scoring against expected rows. It checks answer data, not explanation style. See [Evaluation methodology](/reference/evaluation-methodology/).
+- **Run variance:** agent answers can differ between runs. The comparison is useful because the same grader and same questions are used before and after.
+- **Deterministic DAX tests:** the Lab 08 DAX tests exist because agent runs vary. They run fixed DAX queries against Desktop and don't rely on agent judgment.
+
+## Before you begin
+
+- You finished [Lab 09](/labs/09-ai-metadata/), or restored `lab09-complete`.
+- Power BI Desktop is open with `fabric\ContosoPharmacy.pbip` and the model is refreshed.
+- The Power BI Modeling MCP server is running in VS Code.
+- `evaluation/runs/local-baseline.json` exists from Lab 05 and has a `grade` block.
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Read the tester and comparison prompts
+
+Open the two prompt files so you know what the agent is allowed to do.
+
+1. Open Quick Open: **Ctrl+P**, or **Go > Go to File**.
+2. Open `.github/prompts/answer-business-questions.prompt.md`.
+3. Open `.github/prompts/compare-question-runs.prompt.md`.
+4. Open `evaluation/rubric.md`.
+
+The answer prompt requires Desktop and MCP, and it tells the agent not to make up numbers:
+
+<RepoFile path=".github/prompts/answer-business-questions.prompt.md" lines="7-17" />
+
+The comparison prompt has no paraphrase flag. It compares two graded run files:
+
+<RepoFile path=".github/prompts/compare-question-runs.prompt.md" lines="7-17" />
+
+**You should see:** the prompt saves `evaluation/runs/<label>.json`, then runs `Grade-QuestionRun.ps1`.
+
+<Checkpoint lab="10" step="1" />
+
+### Step 2. Run question-tester on the AI-ready model
+
+<PlatformBadge kind="windows-only" />
+
+1. In Power BI Desktop, select **Home > Refresh** and wait for refresh to finish.
+2. In VS Code, open Copilot Chat: **Ctrl+Alt+I**, or **View > Chat**.
+3. Pick **question-tester** from the agent dropdown.
+4. Type `/answer-business-questions label=local-ai-ready` and press **Enter**.
+5. Approve DAX query tool calls after you read them.
+6. If the agent asks to read `evaluation/expected/` or `evaluation/questions.yaml`, deny it and remind it to use `pwsh ./scripts/Get-BusinessQuestions.ps1`.
+
+The evaluation skill explains the honest path:
+
+<RepoFile path=".github/skills/business-question-evaluation/SKILL.md" lines="9-25" />
+
+**You should see:** `evaluation/runs/local-ai-ready.json` with five answers, DAX, assumptions, rows, and a `grade` block. The agent reports a score per question after running `pwsh ./scripts/Grade-QuestionRun.ps1 -Run local-ai-ready`.
+
+<WhatVaries mustMatch={['The run label is local-ai-ready', 'The file has a grade block', 'The agent does not read expected answers']}>
+The DAX and wording may differ from the sample run. A one-point difference on one question can be normal.
+</WhatVaries>
+
+<Checkpoint lab="10" step="2" />
+
+### Step 3. Compare baseline and AI-ready runs
+
+Run the comparison prompt or the script directly. The lab check looks for both a higher AI-ready score and `out/question-comparison.md`.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/Compare-QuestionRuns.ps1 -Before local-baseline -After local-ai-ready
+```
+
+</TabItem>
+</Tabs>
+
+The script writes to `out/question-comparison.md` by default:
+
+<RepoFile path="scripts/Compare-QuestionRuns.ps1" />
+
+**You should see:** `out/question-comparison.md` with a before and after table. The total score for `local-ai-ready` should be higher than `local-baseline`. Q02, Q04, and Q05 should show the clearest improvement.
+
+<Checkpoint lab="10" step="3" />
+
+### Step 4. Read the score, not just the prose
+
+Open the comparison and both run files.
+
+1. Open `out/question-comparison.md`.
+2. Open `evaluation/runs/local-baseline.json`.
+3. Open `evaluation/runs/local-ai-ready.json`.
+4. Compare the `grade.by_question` blocks before you compare answer text.
+
+The rubric is strict about rows and values:
+
+<RepoFile path="evaluation/rubric.md" />
+
+The committed sample results show the pattern you should expect:
+
+| Question | Typical baseline | Typical AI-ready |
+|---|---|---|
+| Q01 | 2 | 2 |
+| Q02 | 0 | 2 |
+| Q03 | 1 | 2 |
+| Q04 | 0 | 2 |
+| Q05 | 0 | 2 |
+
+**You should see:** Q02 improves after the Medication relationship and time-comparison measures, Q03 improves after average processing time, Q04 improves after the refill index definition, and Q05 improves after previous period is defined.
+
+<Checkpoint lab="10" step="4" />
+
+### Step 5. Account for run variance
+
+Run variance is expected because the agent chooses DAX and interpretations. Don't overreact to a one-point wobble.
+
+1. Ask question-tester: `Explain any question in local-ai-ready that scored below 2. Point to the model change that would help.`
+2. If one score looks surprising, run the after test a second time with a different local label.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+# Optional second run. The prompt supports labels, not a paraphrase flag.
+# In chat: /answer-business-questions label=local-ai-ready-2
+pwsh ./scripts/Grade-QuestionRun.ps1 -Run local-ai-ready-2
+pwsh ./scripts/Compare-QuestionRuns.ps1 -Before local-ai-ready -After local-ai-ready-2 -OutFile out/question-variance.md
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** two AI-ready runs that are close. If they differ, the assumptions field usually explains why. The deterministic proof still comes from the Lab 08 DAX tests, not from repeated agent runs.
+
+<Checkpoint lab="10" step="5" />
+
+### Step 6. Keep the local outputs local
+
+The files this lab creates are for your machine. Don't commit them unless a maintainer asks for a sample.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git status --short evaluation/runs out
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** `local-ai-ready.json` and `out/question-comparison.md` may appear as ignored or untracked local output, depending on your Git settings. Your model files should be unchanged after this lab.
+
+<Checkpoint lab="10" step="6" />
+
+## Verify your work
+
+<VerifyStep lab="10" />
+
+## Troubleshooting
+
+<details>
+<summary>The agent says Desktop or MCP isn't available</summary>
+
+Open `fabric\ContosoPharmacy.pbip` in Power BI Desktop, refresh it, and start the Power BI Modeling MCP server from **Ctrl+Shift+P > MCP: List Servers**. Then rerun `/answer-business-questions label=local-ai-ready`.
+
+</details>
+
+<details>
+<summary>The run file has no grade block</summary>
+
+Run `pwsh ./scripts/Grade-QuestionRun.ps1 -Run local-ai-ready`. The evaluation instructions say the grader writes the `grade` block, not the agent by hand.
+
+</details>
+
+<details>
+<summary>The comparison says AI-ready did not improve</summary>
+
+Open both run files and check labels first. If the labels are right, read each failed question's assumptions. A wrong latest month, summed processing minutes, or missing refill threshold means the agent didn't use the AI-ready metadata. Ask it to answer again and cite the measure or instruction it used.
+
+</details>
+
+<details>
+<summary>I want to test paraphrases</summary>
+
+Each question in `evaluation/questions.yaml` lists paraphrases (see [Business questions](/reference/business-questions/)). Ask the question-tester one of them in chat, for example "Which categories grew or shrank the most last month?", and compare its DAX with the graded run. The grader and the Lab 10 check only score the main wording, so treat this as exploration.
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="Why does Lab 08 have deterministic DAX tests if Lab 10 already uses an agent?"
+	options={[
+		'Agent answers can vary, so fixed DAX tests prove the model returns the expected numbers.',
+		'The DAX tests train Copilot before the run.',
+		'The DAX tests replace Power BI Desktop.',
+	]}
+	answer={0}
+	explanation="The agent run measures AI behavior. The DAX tests measure the model with fixed queries, so they don't vary by prompt wording or agent choices."
+/>
+
+<KnowledgeCheck
+	question="What does a score of 2 mean?"
+	options={[
+		'The explanation is polished and includes a chart.',
+		'Every expected row and value matches within tolerance, with no extra rows.',
+		'The agent used the shortest DAX query.',
+	]}
+	answer={1}
+	explanation="The rubric scores the answer rows. It doesn't score explanation quality, DAX style, or speed."
+/>
+
+<KnowledgeCheck
+	question="What should you do before committing after Lab 10?"
+	options={[
+		'Commit local-ai-ready.json and out/question-comparison.md.',
+		'Check that only local outputs changed, then leave them uncommitted.',
+		'Delete the model changes from Labs 07 to 09.',
+	]}
+	answer={1}
+	explanation="Local run files and comparison output are evidence for your machine. They are usually gitignored and not part of the model PR."
+/>
+
+## Recap and next
+
+You reran the same business questions against the AI-ready model, graded the after run, and compared it with the Lab 05 baseline. You also saw why deterministic tests and agent-based evaluation answer different questions. Next you run the same customization stack in Copilot CLI and watch hooks enforce guardrails.
+
+<NextLab current="10" />
+
+## Go further
+
+- Run one exploratory after test with paraphrased prompts, then compare its assumptions with `local-ai-ready`.
+- Ask model-reviewer to explain any remaining score below 2 and classify it as a model gap, instruction gap, or agent variance.
+- Open [Expected results](/present/expected-results/) and compare your score pattern with the committed sample.
+
+<FeedbackLink />

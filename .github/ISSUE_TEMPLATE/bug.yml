@@ -1,0 +1,35 @@
+name: Bug report
+description: A script, workflow, or validation check doesn't work as documented.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: command
+    attributes:
+      label: Command you ran
+      render: powershell
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: Paste the full output. Remove usernames and paths that identify you.
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows 11
+        - macOS
+        - Ubuntu (GitHub Actions)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else

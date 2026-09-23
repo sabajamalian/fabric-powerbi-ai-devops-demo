@@ -1,0 +1,43 @@
+# Prepares the Copilot cloud agent's environment before it starts work on an assigned issue (Lab 13).
+# The job name must be copilot-setup-steps. See
+# https://docs.github.com/copilot/how-tos/use-copilot-agents/coding-agent/customize-the-agent-environment
+name: Copilot setup steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths: [".github/workflows/copilot-setup-steps.yml"]
+  pull_request:
+    paths: [".github/workflows/copilot-setup-steps.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Python tools and validation
+        shell: pwsh
+        run: ./scripts/Initialize-DevEnvironment.ps1
+
+      # Installs the pinned Skills for Fabric skill from apm.yml into .agents/skills, where the
+      # cloud agent discovers project skills. --only apm skips the MCP servers that package declares.
+      - name: Skills for Fabric (APM)
+        run: |
+          python -m venv "$RUNNER_TEMP/apm"
+          "$RUNNER_TEMP/apm/bin/pip" install --disable-pip-version-check --quiet apm-cli==0.31.0
+          "$RUNNER_TEMP/apm/bin/apm" install --only apm --target copilot

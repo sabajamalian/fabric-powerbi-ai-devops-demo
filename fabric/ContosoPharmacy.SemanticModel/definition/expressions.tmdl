@@ -1,0 +1,2 @@
+/// Folder that holds the synthetic CSV files. Created by scripts/Set-LocalDataLink.ps1.
+expression DataFolderPath = "C:\ContosoPharmacyDemo\data\" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]

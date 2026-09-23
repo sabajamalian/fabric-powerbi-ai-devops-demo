@@ -1,0 +1,320 @@
+---
+title: "Lab 03: Repository and path instructions"
+description: See how repository, AGENTS.md, and path instructions change Copilot Chat responses in VS Code.
+sidebar:
+  label: "03. Instructions"
+lab:
+  number: 3
+  durationMinutes: 25
+  level: intro
+  platforms: [windows, macos]
+  requiresDesktop: false
+  surfaces: [vscode]
+  primitives: [instructions, path-instructions, agents-md]
+  startCheckpoint: none
+  endCheckpoint: none
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import WhatVaries from '~/components/WhatVaries.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+Before you build custom agents, you need to know what context Copilot already reads. Repository instructions set the rules for every chat. Path instructions add file-specific rules only when their `applyTo` pattern matches. `AGENTS.md` gives multi-agent tools a shared guide. This lab shows how to prove which files shaped an answer by checking References in VS Code.
+
+## Concepts
+
+- **Repository instructions:** `.github/copilot-instructions.md`, automatically applied to chat requests in the workspace.
+- **Path instructions:** `.github/instructions/*.instructions.md`, applied when `applyTo` matches the files in context or the task.
+- **AGENTS.md:** a root agent guide read by VS Code and other agent tools when enabled.
+- **References:** the expandable list in a VS Code Chat response that shows instruction files, prompt files, and other context used.
+- **Customization diagnostics:** a VS Code view that helps when instructions are not applied.
+
+## Before you begin
+
+- Finish [Lab 01](/labs/01-get-your-copy/) and open the repo in VS Code.
+- Copilot Chat works in VS Code.
+- Leave Power BI Desktop closed. You don't need it in this lab.
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Read the always-on instructions
+
+Open each file in VS Code:
+
+- Keyboard: **Ctrl+P** (macOS: **Cmd+P**), type the file name, press **Enter**.
+- Command Palette: **Ctrl+Shift+P** (macOS: **Cmd+Shift+P**), run **File: Open File**.
+- Menu: **File > Open File**.
+
+Start with the repository instructions:
+
+<RepoFile path=".github/copilot-instructions.md" lines="1-34" />
+
+Then read the shared agent guide:
+
+<RepoFile path="AGENTS.md" lines="1-35" />
+
+**You should see:** the repo map, synthetic data boundaries, validation commands, and a rule that agents should not read expected answers while answering business questions.
+
+<Checkpoint lab="03" step="1" />
+
+### Step 2. Ask Copilot a repo-wide question
+
+1. Open Copilot Chat: **Ctrl+Alt+I** (macOS: **Ctrl+Cmd+I**), or **View > Chat**.
+2. Select **Ask** or a normal chat mode, not a custom agent.
+3. Ask: `What naming convention should measures follow here?`
+4. When the answer finishes, expand **References**, **Used references**, or the references list shown under the response. The exact label can vary by VS Code version.
+
+VS Code settings in this repo make instruction usage visible:
+
+<RepoFile path=".vscode/settings.json" lines="1-10" />
+
+**You should see:** the answer mentions format strings, descriptions, display folders, or `rules/naming-conventions.yaml`. The References list includes `.github/copilot-instructions.md` and may include `AGENTS.md`.
+
+<WhatVaries mustMatch={["The response uses repo-specific model conventions", "References show at least one always-on instruction file"]}>
+VS Code can reorder references or change the label from release to release. Look for the file names, not one exact UI string.
+</WhatVaries>
+
+<Checkpoint lab="03" step="2" />
+
+### Step 3. Compare path instructions for TMDL and Python
+
+Open a TMDL file first:
+
+1. Open `fabric/ContosoPharmacy.SemanticModel/definition/tables/fact_rx_fill.tmdl`.
+2. Ask Copilot: `How should I write a description for this column?`
+3. Expand the response References.
+
+<RepoFile path=".github/instructions/tmdl.instructions.md" />
+
+Then compare with Python:
+
+1. Open `tools/python/pharmacy_demo/labcheck/checks.py`.
+2. Ask Copilot: `What style should I follow if I add a helper function here?`
+3. Expand the response References.
+
+<RepoFile path=".github/instructions/python.instructions.md" />
+
+**You should see:** the TMDL answer references `tmdl.instructions.md` and talks about `///` descriptions, tabs, lineage tags, and validation. The Python answer references `python.instructions.md` and talks about Python 3.12, `pathlib.Path`, UTF-8, exit codes, and tests.
+
+<Checkpoint lab="03" step="3" />
+
+### Step 4. Create a path instructions file for rules
+
+The lab check requires a new `.github/instructions/*.instructions.md` file whose `applyTo` pattern matches real repo files. Create `rules.instructions.md` for the YAML rules under `rules/`.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+@'
+---
+applyTo: 'rules/**'
+description: Rules for editing lab convention YAML files.
+---
+# Rule files
+
+- Keep rule IDs stable because scripts, skills, and lab checks refer to them.
+- Explain why a rule exists before changing thresholds or required objects.
+- Run `pwsh ./scripts/Invoke-Validation.ps1 -Only customizations` after editing rules.
+'@ | Set-Content -Path .github/instructions/rules.instructions.md -Encoding utf8
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+cat > .github/instructions/rules.instructions.md <<'RULES'
+---
+applyTo: 'rules/**'
+description: Rules for editing lab convention YAML files.
+---
+# Rule files
+
+- Keep rule IDs stable because scripts, skills, and lab checks refer to them.
+- Explain why a rule exists before changing thresholds or required objects.
+- Run `pwsh ./scripts/Invoke-Validation.ps1 -Only customizations` after editing rules.
+RULES
+```
+
+</TabItem>
+</Tabs>
+
+Open `rules/naming-conventions.yaml`, then ask Copilot: `What should I be careful about before changing a convention rule?`
+
+**You should see:** the response uses your new guidance, and References includes `.github/instructions/rules.instructions.md`. The file has non-empty frontmatter with `applyTo: 'rules/**'`, and that pattern matches real files under `rules/`.
+
+<Checkpoint lab="03" step="4" />
+
+### Step 5. Review the shipped path instructions
+
+Open each shipped file under `.github/instructions/`. They are scoped to different parts of the repo:
+
+- `tmdl.instructions.md` for semantic model TMDL.
+- `pbir.instructions.md` for report JSON.
+- `python.instructions.md` for Python tools.
+- `powershell.instructions.md` for scripts.
+- `evaluation.instructions.md` for business questions and run files.
+- `site.instructions.md` for the lab site.
+
+<RepoFile path=".github/instructions/pbir.instructions.md" />
+
+<RepoFile path=".github/instructions/powershell.instructions.md" />
+
+<RepoFile path=".github/instructions/evaluation.instructions.md" />
+
+<RepoFile path=".github/instructions/site.instructions.md" />
+
+**You should see:** each file has frontmatter with `applyTo`, followed by short rules for that path. They are instructions, not scripts, so they guide Copilot but don't enforce anything by themselves.
+
+<Checkpoint lab="03" step="5" />
+
+### Step 6. Check instruction diagnostics and settings
+
+If a reference is missing, use VS Code's diagnostics before editing files blindly.
+
+1. Open the Command Palette: **Ctrl+Shift+P** (macOS: **Cmd+Shift+P**), or **View > Command Palette**.
+2. Run **Chat: Configure Instructions** to see available instruction files.
+3. Run **Chat: Open Customizations** if your VS Code version has the Agent Customizations editor.
+4. In the Chat view, open the **More Actions** menu, then look for **Diagnostics** when an instruction file is not applied.
+5. Confirm these settings are enabled in `.vscode/settings.json`: `chat.includeApplyingInstructions`, `chat.includeReferencedInstructions`, and `chat.useAgentsMdFile`.
+
+The VS Code docs say to use References when an `applyTo` pattern may not be matching, and to check those settings when instructions aren't applied.
+
+**You should see:** your workspace instruction files listed, with source locations. No JSON or YAML parse errors should appear for `rules.instructions.md`.
+
+<Checkpoint lab="03" step="6" />
+
+### Step 7. Compare which surfaces read which instructions
+
+Read the customization reference before later labs add agents, prompts, skills, MCP, hooks, and code review.
+
+1. Open [Copilot customization](/reference/copilot-customization/).
+2. Open [Copilot surfaces](/reference/copilot-surfaces/).
+3. Compare VS Code Chat, Copilot CLI, Copilot cloud agent, and Copilot code review.
+4. Note which surfaces use repository instructions, path instructions, and `AGENTS.md`.
+
+**You should see:** repository instructions and path instructions are shared context, while enforcement comes from validation scripts, CI, hooks, and code review.
+
+<Checkpoint lab="03" step="7" />
+
+### Step 8. Check the diff you created
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git status --short .github/instructions
+git diff -- .github/instructions/rules.instructions.md
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git status --short .github/instructions
+git diff -- .github/instructions/rules.instructions.md
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** one new file, `.github/instructions/rules.instructions.md`, with the `applyTo: 'rules/**'` frontmatter and the three rules you added.
+
+<Checkpoint lab="03" step="8" />
+
+## Verify your work
+
+<VerifyStep lab="03" />
+
+## Troubleshooting
+
+<details>
+<summary>References don't show any instruction files</summary>
+
+Check `.vscode/settings.json` for `chat.includeApplyingInstructions`, `chat.includeReferencedInstructions`, and `chat.useAgentsMdFile`. Then reload VS Code with **Developer: Reload Window** from the Command Palette.
+
+</details>
+
+<details>
+<summary>Your new instructions file doesn't apply</summary>
+
+Check the frontmatter exactly. The lab check expects a new `.github/instructions/*.instructions.md` file, an `applyTo` value, non-empty body text, and a glob that matches real repo files. `rules/**` matches the files in `rules/`.
+
+</details>
+
+<details>
+<summary>Copilot answers with generic Power BI advice</summary>
+
+Make sure the repo folder is the VS Code workspace root. If you opened only `fabric/`, VS Code won't find `.github/copilot-instructions.md` or `AGENTS.md` at the root.
+
+</details>
+
+<details>
+<summary>The Command Palette labels differ from the lab</summary>
+
+VS Code Copilot UI labels move. Use the closest command with **Instructions**, **Customizations**, or **Diagnostics** in the name, then confirm the file names in References.
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="What is the difference between `.github/copilot-instructions.md` and a `.instructions.md` file?"
+	options={[
+		'`copilot-instructions.md` is always-on for the repo. `.instructions.md` files apply by glob or task context.',
+		'`.instructions.md` files are only for PowerShell scripts.',
+		'`copilot-instructions.md` is ignored by VS Code.',
+	]}
+	answer={0}
+	explanation="Repository instructions apply broadly. Path instructions add more specific rules when their frontmatter matches the task or files."
+/>
+
+<KnowledgeCheck
+	question="How do you verify which instruction files shaped a VS Code Chat answer?"
+	options={[
+		'Run git status.',
+		'Expand References or Used references under the chat response.',
+		'Open Power BI Desktop diagnostics.',
+	]}
+	answer={1}
+	explanation="VS Code shows the instruction files and other context used by the response in its References list."
+/>
+
+<KnowledgeCheck
+	question="Why are instructions not enough to protect generated data or expected answers?"
+	options={[
+		'Instructions guide the agent, but hooks, validation, and CI enforce rules deterministically.',
+		'Instructions only work when Power BI Desktop is open.',
+		'Instructions are converted into GitHub branch protection rules.',
+	]}
+	answer={0}
+	explanation="Instructions are advisory context. The repo also uses hooks, validation scripts, and CI for hard checks."
+/>
+
+## Recap and next
+
+You read the repo's always-on instructions, confirmed path instructions in VS Code References, created a new rules-scoped instructions file, and learned where to diagnose missing instruction context. Next you connect MCP so agents can inspect the Power BI model with tools.
+
+<NextLab current="03" />
+
+## Go further
+
+- Add one more rule to `rules.instructions.md`, ask a rules question again, and see whether the answer changes.
+- Open [Copilot customization](/reference/copilot-customization/) and map instructions, skills, prompts, agents, hooks, and MCP to the labs that use them.
+
+<FeedbackLink />

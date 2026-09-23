@@ -1,0 +1,427 @@
+---
+title: Troubleshooting
+description: "Fix common setup, Copilot, Power BI, validation, cloud agent, and lab-site problems in the Contoso Pharmacy labs."
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+
+Use this page when a lab step fails and the local hint is not enough. Start with the area that matches the symptom, then go back to the linked lab step.
+
+## Install and PATH
+
+<details>
+<summary>`pwsh`, `git`, `python`, `node`, `code`, or `gh` is not found</summary>
+
+**Cause:** the tool is not installed, or the terminal was opened before the installer updated PATH.
+
+**Fix:** close every terminal, open PowerShell 7, and rerun the prerequisite check:
+
+```powershell
+pwsh ./scripts/Test-Prerequisites.ps1
+```
+
+Fix the first required failure. On Windows, install from [Lab 00 step 2](/labs/00-workstation-setup/#step-2). Then rerun [Lab 01 step 5](/labs/01-get-your-copy/#step-5).
+
+</details>
+
+<details>
+<summary>Windows says the path is too long during clone or validation</summary>
+
+**Cause:** Git for Windows long paths are not enabled, or the repo is cloned under a deep folder.
+
+**Fix:** run:
+
+```powershell
+git config --global core.longpaths true
+```
+
+If the repo path is still long, clone again to a short path such as `C:\src\contoso-pharmacy-lab`. See [Lab 00 step 3](/labs/00-workstation-setup/#step-3) and [Lab 01 step 2](/labs/01-get-your-copy/#step-2).
+
+</details>
+
+## PowerShell execution policy
+
+<details>
+<summary>PowerShell blocks a script with an execution policy error</summary>
+
+**Cause:** Windows PowerShell policy blocks local scripts. The labs use PowerShell 7, but Windows policy can still block downloaded files.
+
+**Fix:** in PowerShell 7, run:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+If your organization blocks policy changes, run a single script with:
+
+```powershell
+pwsh -ExecutionPolicy Bypass -File ./scripts/Initialize-DevEnvironment.ps1
+```
+
+Return to [Lab 01 step 4](/labs/01-get-your-copy/#step-4).
+
+</details>
+
+## Python and `.venv`
+
+<details>
+<summary>`python` opens the Microsoft Store</summary>
+
+**Cause:** Windows App Execution Alias is taking `python` before the real Python install.
+
+**Fix:** install Python 3.12 or later from the official installer, then reopen PowerShell. If needed, turn off the Store alias in **Settings > Apps > Advanced app settings > App execution aliases**. Rerun [Lab 00 step 4](/labs/00-workstation-setup/#step-4).
+
+</details>
+
+<details>
+<summary>`Initialize-DevEnvironment.ps1` fails while installing packages</summary>
+
+**Cause:** Python is too old, the virtual environment is half-created, or a proxy blocks package downloads.
+
+**Fix:** check Python first:
+
+```powershell
+python --version
+```
+
+Then recreate the environment:
+
+```powershell
+pwsh ./scripts/Initialize-DevEnvironment.ps1 -Force
+```
+
+If a corporate proxy blocks downloads, ask IT to allow PyPI and npm registry access for development tools. Return to [Lab 01 step 4](/labs/01-get-your-copy/#step-4).
+
+</details>
+
+## Git and long paths
+
+<details>
+<summary>`Restore-LabCheckpoint.ps1` says the upstream remote is missing</summary>
+
+**Cause:** the checkpoint restore script fetches tags from the upstream lab repo, and your clone does not have the `upstream` remote.
+
+**Fix:** add the remote:
+
+```powershell
+git remote add upstream https://github.com/sabajamalian/fabric-powerbi-ai-devops-demo.git
+git fetch upstream --tags
+```
+
+Then rerun the restore command from [Lab 01 step 3](/labs/01-get-your-copy/#step-3).
+
+</details>
+
+<details>
+<summary>Git status shows unexpected Power BI files</summary>
+
+**Cause:** Power BI Desktop wrote local cache or settings files, or the ignore rules were changed.
+
+**Fix:** do not commit `.pbi/localSettings.json`, `.pbi/cache.abf`, or `*.pbix`. Restore the ignore rules from Git if needed and rerun [Lab 02 step 5](/labs/02-meet-the-baseline-model/#step-5).
+
+</details>
+
+## VS Code and Copilot Chat
+
+<details>
+<summary>Agent mode, tools, or the agent picker is missing</summary>
+
+**Cause:** VS Code is old, Copilot Chat is not signed in, or org policy disables the feature.
+
+**Fix:** update VS Code, sign in with GitHub, open **View > Chat**, and verify the agent picker. If this is a managed account, ask your admin to enable Copilot Chat, agent mode, custom agents, and MCP. Start at [Lab 00 step 6](/labs/00-workstation-setup/#step-6).
+
+</details>
+
+<details>
+<summary>References do not include repo instructions or path instructions</summary>
+
+**Cause:** VS Code did not load the workspace as trusted, the file does not match the `applyTo` glob, or the customization file has invalid frontmatter.
+
+**Fix:** trust the workspace, open the repo root, and check the file under `.github/instructions/`. Then retry [Lab 03 step 3](/labs/03-instructions/#step-3).
+
+</details>
+
+## Custom agents not appearing
+
+<details>
+<summary>A custom agent file exists but the agent is not in the picker</summary>
+
+**Cause:** VS Code loaded a subfolder instead of the repo root, or the `.agent.md` frontmatter is invalid.
+
+**Fix:** open the repo root. Run **Chat: Open Customizations** from the Command Palette (**Ctrl+Shift+P**, macOS: **Cmd+Shift+P**) and check the **Agents** tab. If needed, run **Developer: Reload Window**. For Lab 14, validate with:
+
+```powershell
+pwsh ./scripts/Invoke-Validation.ps1 -Only customizations
+```
+
+Return to [Lab 14 step 3](/labs/14-build-your-own/#step-3).
+
+</details>
+
+## Skills not loading
+
+<details>
+<summary>A skill folder exists but Copilot ignores it</summary>
+
+**Cause:** `SKILL.md` frontmatter is missing, the `name` does not match the folder, or the description is too vague for the model to choose it.
+
+**Fix:** ensure `name` is lowercase hyphenated text and matches the folder exactly. Add a description that states what the skill does and when to use it. Rerun [Lab 14 step 5](/labs/14-build-your-own/#step-5).
+
+</details>
+
+<details>
+<summary>The Skills for Fabric skill is not installed</summary>
+
+**Cause:** APM did not run or could not write `.agents/skills/semantic-model-authoring/`.
+
+**Fix:** run APM from the repo root:
+
+```powershell
+apm install --only apm --target copilot
+```
+
+Then continue with [Lab 06 step 2](/labs/06-skills-and-assessor/#step-2).
+
+</details>
+
+## MCP server issues
+
+<details>
+<summary>Power BI Modeling MCP server will not start</summary>
+
+**Cause:** Node.js is missing, the extension is old, MCP policy is disabled, or Power BI Desktop is not open.
+
+**Fix:** rerun prerequisites, update VS Code extensions, open `fabric\ContosoPharmacy.pbip` in Desktop, then use **Command Palette > MCP: List Servers**. Return to [Lab 04 step 2](/labs/04-connect-mcp/#step-2).
+
+</details>
+
+<details>
+<summary>Tool calls are skipped or the agent says tools are unavailable</summary>
+
+**Cause:** the tools are unchecked in the tools picker, or the active agent does not include the MCP tool namespace.
+
+**Fix:** in Chat, open the tools picker and select the Power BI Modeling tools. Use the intended custom agent, such as `question-tester` or `model-improver`. See [MCP](/reference/mcp/).
+
+</details>
+
+## Power BI Desktop and PBIP
+
+<details>
+<summary>Desktop cannot find `C:\ContosoPharmacyDemo\data`</summary>
+
+**Cause:** the Windows data junction was not created or was removed.
+
+**Fix:** close Desktop, then run:
+
+```powershell
+pwsh ./scripts/Set-LocalDataLink.ps1
+```
+
+Reopen the PBIP and refresh. See [Lab 02 step 1](/labs/02-meet-the-baseline-model/#step-1).
+
+</details>
+
+<details>
+<summary>Desktop rewrites files after an agent edits TMDL</summary>
+
+**Cause:** Desktop had the model open in memory and saved over the file edits.
+
+**Fix:** close Desktop before text edits. Restore the affected files with Git, rerun the agent task, and reopen Desktop only after validation. See [Lab 07 step 7](/labs/07-handoffs-names-descriptions/#step-7).
+
+</details>
+
+## Report bindings
+
+<details>
+<summary>Report visuals show missing fields after renames</summary>
+
+**Cause:** PBIR visuals still point at old table or column names.
+
+**Fix:** run:
+
+```powershell
+pwsh ./scripts/Test-ReportBindings.ps1
+```
+
+Ask `model-improver` to fix the listed files using the `pbir-rebinding` skill. Return to [Lab 07 step 6](/labs/07-handoffs-names-descriptions/#step-6).
+
+</details>
+
+## Hooks
+
+<details>
+<summary>The hook does not deny edits to protected files</summary>
+
+**Cause:** hooks are disabled, `.venv` was not initialized, or the active surface does not support the hook file.
+
+**Fix:** run initialization, then inspect `.github/hooks/guardrails.json` and `out/hooks/session.log`. The hook entry points are:
+
+<RepoFile path=".github/hooks/guardrails.json" lines="13-29" />
+
+Return to [Lab 11 step 4](/labs/11-copilot-cli-and-hooks/#step-4).
+
+</details>
+
+<details>
+<summary>The post-edit TMDL lint is noisy</summary>
+
+**Cause:** the hook runs lint after TMDL edits. It is supposed to surface syntax problems early.
+
+**Fix:** fix the first lint error, then rerun:
+
+```powershell
+pwsh ./scripts/Invoke-Validation.ps1 -Only tmdl
+```
+
+Return to [Lab 11 step 5](/labs/11-copilot-cli-and-hooks/#step-5).
+
+</details>
+
+## Copilot CLI
+
+<details>
+<summary>`copilot` is not found or not signed in</summary>
+
+**Cause:** Copilot CLI is optional in setup, but required for Lab 11.
+
+**Fix:** install it from the current official instructions, reopen the terminal, and run `copilot` once to sign in. Then retry [Lab 11 step 1](/labs/11-copilot-cli-and-hooks/#step-1).
+
+</details>
+
+<details>
+<summary>Copilot CLI does not load repo customizations</summary>
+
+**Cause:** the CLI session did not start from the repo root, or customizations are invalid.
+
+**Fix:** start the CLI from the repo root and run customization validation:
+
+```powershell
+pwsh ./scripts/Invoke-Validation.ps1 -Only customizations
+```
+
+</details>
+
+## CI failures
+
+<details>
+<summary>The validate job fails on Linux or Windows</summary>
+
+**Cause:** CI runs the same tenant-free validation as local setup. A TMDL lint error, binding break, expected-answer drift, customization error, or hygiene issue can fail it.
+
+**Fix:** run the same validation locally:
+
+```powershell
+pwsh ./scripts/Invoke-Validation.ps1
+```
+
+Fix the first failure. See [CI workflows](/reference/ci-workflows/) and [Lab 12 step 5](/labs/12-pull-request-and-code-review/#step-5).
+
+</details>
+
+<details>
+<summary>Dependency review fails on a pull request</summary>
+
+**Cause:** the PR changed a dependency manifest and GitHub dependency review found a moderate or higher issue.
+
+**Fix:** update or remove the dependency change. If you did not mean to change dependencies, restore the manifest and lockfile.
+
+</details>
+
+## Cloud agent
+
+<details>
+<summary>Copilot cannot be assigned to an issue</summary>
+
+**Cause:** Copilot cloud agent is not enabled for the repo, your plan does not include it, or org policy blocks it. <PlatformBadge kind="paid-plan" />
+
+**Fix:** check repository settings and ask your org admin to enable cloud agent. Then retry [Lab 13 step 3](/labs/13-cloud-agent/#step-3).
+
+</details>
+
+<details>
+<summary>Cloud agent setup steps fail</summary>
+
+**Cause:** `.github/workflows/copilot-setup-steps.yml` failed before the agent started. Common causes are blocked package downloads or a workflow edit that changed the required job name.
+
+**Fix:** open the session log, expand setup, and compare the workflow with the repo file:
+
+<RepoFile path=".github/workflows/copilot-setup-steps.yml" lines="16-43" />
+
+Return to [Lab 13 step 4](/labs/13-cloud-agent/#step-4).
+
+</details>
+
+<details>
+<summary>Cloud agent tries to use Power BI Desktop</summary>
+
+**Cause:** the task is not scoped for Linux.
+
+**Fix:** comment on the PR with `@copilot` and tell it to edit TMDL and AI-prep files as text, then run `pwsh ./scripts/Invoke-Validation.ps1`. See [Lab 13 step 5](/labs/13-cloud-agent/#step-5).
+
+</details>
+
+## Lab site locally
+
+<details>
+<summary>The lab site will not start</summary>
+
+**Cause:** Node.js is missing, site dependencies are not installed, or a previous dev server owns the port.
+
+**Fix:** run the site helper from the repo root:
+
+```powershell
+pwsh ./scripts/lab/Start-LabSite.ps1
+```
+
+If you only need a static check, use:
+
+```powershell
+pwsh ./scripts/lab/Start-LabSite.ps1 -Build
+```
+
+The script is described in [Scripts](/reference/scripts/).
+
+</details>
+
+<details>
+<summary>Progress checkboxes disappeared</summary>
+
+**Cause:** progress is stored in browser local storage. A different browser, profile, or site URL has different storage.
+
+**Fix:** use the same browser and URL, or reset progress on [/progress/](/progress/).
+
+</details>
+
+## Checkpoint restore
+
+<details>
+<summary>Checkpoint restore refuses to run with uncommitted changes</summary>
+
+**Cause:** the script protects your work before it restores `fabric/` and `lab/samples/` from a tag.
+
+**Fix:** commit, stash, or discard your changes. Then run:
+
+```powershell
+pwsh ./scripts/lab/Restore-LabCheckpoint.ps1 -Checkpoint lab09-complete
+```
+
+See [Lab 01 step 3](/labs/01-get-your-copy/#step-3).
+
+</details>
+
+<details>
+<summary>Checkpoint tag is missing</summary>
+
+**Cause:** the upstream tags were not fetched, or the `upstream` remote points somewhere else.
+
+**Fix:** run:
+
+```powershell
+git remote -v
+git fetch upstream --tags
+pwsh ./scripts/lab/Restore-LabCheckpoint.ps1 -List
+```
+
+</details>

@@ -1,0 +1,287 @@
+---
+title: "Lab 04: Connect Power BI Modeling MCP"
+description: "Start the Power BI Modeling MCP server in VS Code and connect Copilot to the Contoso Pharmacy model."
+sidebar:
+  label: "04. Connect MCP"
+lab:
+  number: 4
+  durationMinutes: 30
+  level: intermediate
+  platforms: [windows, macos-file-mode]
+  requiresDesktop: false
+  surfaces: [vscode, desktop]
+  primitives: [mcp]
+  startCheckpoint: lab02-start
+  endCheckpoint: none
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import WhatVaries from '~/components/WhatVaries.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+Instructions tell Copilot what good work looks like. MCP gives it tools. The Power BI Modeling MCP server lets a chat agent inspect the semantic model that is open in Power BI Desktop, run DAX, and make model changes with your approval. In this lab you connect it in read-first mode, so later agents can test their answers against the live model instead of guessing from files.
+
+## Concepts
+
+- **Model Context Protocol (MCP):** an open protocol that lets VS Code expose external tools to Copilot Chat. See [MCP](/reference/mcp/).
+- **Power BI Modeling MCP:** Microsoft's local MCP server for Power BI semantic models. It can connect to Power BI Desktop, Fabric semantic models, or PBIP project files, and it exposes tools for model metadata, DAX queries, relationships, measures, and other modeling operations.
+- **Workspace MCP config:** `.vscode/mcp.json` is committed so every learner sees the same server names and pinned package versions. Secrets stay out of this file.
+- **Tool approval:** VS Code asks before an MCP server starts and before tools run. The Power BI MCP server also asks before the first query or model edit.
+- **File mode:** macOS learners cannot run Power BI Desktop, but they can still read and edit PBIP files. Some Power BI Modeling MCP PBIP operations are documented, but this lab only verifies the live Desktop path on Windows.
+
+## Before you begin
+
+- You finished [Lab 02](/labs/02-meet-the-baseline-model/) and can open `fabric\ContosoPharmacy.pbip` on Windows.
+- You finished [Lab 03](/labs/03-instructions/) or you restored the baseline checkpoint below.
+- You use VS Code with GitHub Copilot Chat signed in.
+- Node.js is installed. The workspace MCP entry starts the server with `npx`.
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Find the two ways this repo registers Power BI Modeling MCP
+
+Open the Explorer (**Ctrl+Shift+E**, or **View > Explorer**) and review these files:
+
+<RepoFile path=".vscode/extensions.json" />
+
+<RepoFile path=".vscode/mcp.json" />
+
+The recommended extension is `analysis-services.powerbi-modeling-mcp`. The workspace config also registers the npm package `@microsoft/powerbi-modeling-mcp@0.5.0-beta.13`. Use one path at a time. If both are enabled, the same tools can appear twice in chat.
+
+**You should see:** the Power BI Modeling MCP VS Code extension in the recommendations, and a workspace server named `powerbi-modeling-mcp` that starts with `npx`. You should not see passwords, tenant IDs, workspace IDs, or access tokens.
+
+<Checkpoint lab="04" step="1" />
+
+### Step 2. Validate the committed MCP config
+
+Run the lab check for only the MCP config:
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 04 -Only L04-mcp-config
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 04 -Only L04-mcp-config
+```
+
+</TabItem>
+</Tabs>
+
+This check parses `.vscode/mcp.json`, looks for a Power BI server entry, and scans for literal secrets or GUIDs. The same pattern is used for the cloud agent template:
+
+<RepoFile path="config/cloud-agent-mcp.template.json" lines="1-16" />
+
+**You should see:** `PASS L04-mcp-config`, with `powerbi-modeling-mcp` listed as the server. If Fabric MCP is also listed, that's fine. Fabric MCP is optional in this lab.
+
+<Checkpoint lab="04" step="2" />
+
+### Step 3. Open the Contoso Pharmacy model in Desktop
+
+<PlatformBadge kind="windows-only" />
+
+1. In File Explorer, open `fabric\ContosoPharmacy.pbip`.
+2. In Power BI Desktop, select **Home > Refresh** and wait for the refresh to finish.
+3. Leave Desktop open. The MCP server discovers the Analysis Services instance that Desktop starts for the model.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 04 -Only L04-desktop
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 04 -Only L04-desktop
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** on Windows, the check reports a running Desktop model instance. On macOS, it reports `SKIP`, because Power BI Desktop is not available there.
+
+<Aside type="note" title="No Desktop?">
+Use file mode for the rest of the repo labs. You can still read and edit TMDL and PBIR files, and the lab checks that do not need Desktop still run. Live DAX queries through Desktop wait until you use a Windows machine.
+</Aside>
+
+<Checkpoint lab="04" step="3" />
+
+### Step 4. Start the MCP server from VS Code
+
+1. Open the Command Palette: **Ctrl+Shift+P** (macOS: **Cmd+Shift+P**), or **View > Command Palette**.
+2. Run **MCP: List Servers**.
+3. Select **powerbi-modeling-mcp**.
+4. Choose **Start Server**. If VS Code says the server is disabled, choose **Enable** first.
+5. When the trust dialog appears, select the server configuration link, confirm it points to this workspace's `.vscode/mcp.json`, then select **Trust**.
+
+VS Code's current MCP docs say you can also find installed MCP servers in the Extensions view by searching `@mcp`, and that first start shows a trust prompt for workspace servers.
+
+**You should see:** `powerbi-modeling-mcp` moves to a running state. If this is the first run, `npx` may download the pinned package before the server is ready.
+
+<Checkpoint lab="04" step="4" />
+
+### Step 5. Enable the Power BI tools in agent mode
+
+1. Open Copilot Chat: **Ctrl+Alt+I** (macOS: **Ctrl+Cmd+I**), or **View > Chat**.
+2. Switch the chat mode to **Agent** from the mode picker in the chat input.
+3. Select **Configure Tools** in the chat input.
+4. Expand **powerbi-modeling-mcp**.
+5. Leave read tools and DAX query tools selected. Keep write tools selected only if you are ready to approve model edits later.
+
+The Power BI Modeling MCP repo documents tool groups such as `connection_operations`, `model_operations`, `table_operations`, `relationship_operations`, `measure_operations`, and `dax_query_operations`. The exact display names can change while the server is in preview.
+
+**You should see:** Power BI Modeling MCP tools in the tool picker. At minimum, you should see connection and DAX query capabilities. If Fabric MCP tools appear too, you can leave them off for now.
+
+<Checkpoint lab="04" step="5" />
+
+### Step 6. Connect to Desktop and run a safe read
+
+In Agent mode, send this prompt:
+
+```text
+Connect to the Power BI Desktop instance that has ContosoPharmacy open. List the tables and row counts, then run a DAX query that returns prescription fill counts by region for 2025-12. Do not change the model.
+```
+
+Approve each tool call after you read it. For the Power BI MCP server, expect an approval before the first query. Do not approve any edit or write operation in this lab.
+
+**You should see:** a connection to the open Desktop model, a list of the baseline tables, and DAX results grouped by region. The table names still use the baseline source names, because [Lab 07](/labs/07-handoffs-names-descriptions/) has not renamed them yet.
+
+<WhatVaries mustMatch={['The agent connects to the ContosoPharmacy model open in Desktop', 'No model edits are requested or approved', 'The answer uses Power BI Modeling MCP tools, not invented rows']}>
+The exact DAX and row-count wording may vary. Some versions show tool names, and some show only an approval card.
+</WhatVaries>
+
+<Checkpoint lab="04" step="6" />
+
+### Step 7. Try the PBIP file-mode path, then stop the server
+
+The Power BI Modeling MCP docs say the server can open a semantic model from a PBIP folder with a prompt like this:
+
+```text
+Open semantic model from PBIP folder 'fabric/ContosoPharmacy.SemanticModel/definition' in read-only mode and list the tables.
+```
+
+Use this as an exploration path only. I verified the repo configuration and the public documentation that describe PBIP support. I could not verify that offline PBIP mode returns data rows on macOS, and it should not replace the Desktop path for Labs 05, 08, or 10.
+
+To stop the server:
+
+1. Open **MCP: List Servers** from **View > Command Palette**.
+2. Select **powerbi-modeling-mcp**.
+3. Choose **Stop Server**.
+
+**You should see:** file-mode metadata if your server version supports it, or a clear error that the operation needs a different path or Desktop connection. After stopping, the server shows as stopped in **MCP: List Servers**.
+
+<Checkpoint lab="04" step="7" />
+
+## Verify your work
+
+<VerifyStep lab="04" />
+
+## Troubleshooting
+
+<details>
+<summary>MCP: List Servers does not show powerbi-modeling-mcp</summary>
+
+Open `.vscode/mcp.json` and confirm it still has the `powerbi-modeling-mcp` server. Then run **Developer: Reload Window** from **View > Command Palette**. If your organization disables MCP servers in Copilot, VS Code can read the file but not expose the tools.
+
+</details>
+
+<details>
+<summary>The server starts, then fails with an npx or Node error</summary>
+
+Run `node --version` in the VS Code terminal. The lab expects Node.js 20 or later. If Node works, open **MCP: List Servers > powerbi-modeling-mcp > Show Output** and read the first error. Corporate proxies often block the first `npx` package download.
+
+</details>
+
+<details>
+<summary>The agent cannot find Power BI Desktop</summary>
+
+Make sure Desktop is open with `fabric\ContosoPharmacy.pbip`, not just the welcome screen. Select **Home > Refresh** once and wait for the spinner to finish. The local Analysis Services port file appears only after the model is loaded.
+
+</details>
+
+<details>
+<summary>The tools are available but Copilot never calls them</summary>
+
+Open Copilot Chat, switch to **Agent** mode, select **Configure Tools**, and make sure the Power BI tools are checked. Ask for a specific tool-backed action, for example "connect to the Desktop model and list tables".
+
+</details>
+
+<details>
+<summary>I see two Power BI Modeling MCP servers</summary>
+
+You likely have both the VS Code extension and the workspace `npx` server active. Disable one from **MCP: List Servers**. For this lab, keep the workspace server if you want to match the pinned version in `.vscode/mcp.json`.
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="Where does this repo define the shared MCP server configuration?"
+	options={[
+		'In .vscode/mcp.json, committed with the workspace.',
+		'In evaluation/run.schema.json, next to the grader.',
+		'Only in your personal VS Code user settings.',
+	]}
+	answer={0}
+	explanation="The workspace .vscode/mcp.json is the shared config. User settings can add more servers, but they are not part of the lab repo."
+/>
+
+<KnowledgeCheck
+	question="Why do you approve MCP tool calls one by one?"
+	options={[
+		'Tool approval lets you review what external code or data access the agent is about to use.',
+		'Power BI Desktop requires one approval per visual.',
+		'The lab checks only pass after you approve every available tool.',
+	]}
+	answer={0}
+	explanation="MCP tools can read data or change a model. Approval is the moment to reject a call that is out of scope."
+/>
+
+<KnowledgeCheck
+	question="What can macOS learners do in this lab?"
+	options={[
+		'Run Power BI Desktop through the same MCP connection.',
+		'Use file mode and the TMDL checks, while skipping Desktop-only live DAX steps.',
+		'Skip all future labs, because every check needs Desktop.',
+	]}
+	answer={1}
+	explanation="Power BI Desktop is Windows-only. Most repo checks read files, so macOS learners can continue in file mode and use a Windows machine for Desktop-specific checks."
+/>
+
+## Recap and next
+
+You reviewed the workspace MCP config, started the Power BI Modeling MCP server, connected it to the model open in Desktop, and saw how tool approval works. The model is still the weak baseline. Next you use the connection to measure how well an agent answers business questions before the model is improved.
+
+<NextLab current="04" />
+
+## Go further
+
+- Start the optional `fabric-mcp` server from **MCP: List Servers** and ask it for Fabric documentation about PBIP projects. Keep it out of the required lab path.
+- Open the Power BI Modeling MCP output log and find the exact command VS Code used to start the server.
+- Try the extension path instead of the workspace `npx` path, then disable one server so the tool list stays clean.
+
+<FeedbackLink />

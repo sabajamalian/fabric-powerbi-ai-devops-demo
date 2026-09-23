@@ -1,0 +1,97 @@
+# Lab verification contract. Each check is implemented in tools/python/pharmacy_demo/labcheck/checks.py
+# under the same id. Run: pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 07
+# `anchor` is the heading id on the lab page that fixes a failure.
+version: 1
+site_url: https://sabajamalian.github.io/fabric-powerbi-ai-devops-demo/
+
+labs:
+  "00": { slug: labs/00-workstation-setup, title: Set up your workstation }
+  "01": { slug: labs/01-get-your-copy, title: Get your copy and explore the repo }
+  "02": { slug: labs/02-meet-the-baseline-model, title: Meet the baseline model }
+  "03": { slug: labs/03-instructions, title: Repository and path instructions }
+  "04": { slug: labs/04-connect-mcp, title: Connect Power BI Modeling MCP }
+  "05": { slug: labs/05-question-tester-before, title: "Your first custom agent: question-tester, before" }
+  "06": { slug: labs/06-skills-and-assessor, title: Skills and the read-only assessor }
+  "07": { slug: labs/07-handoffs-names-descriptions, title: "Handoffs, names, and descriptions" }
+  "08": { slug: labs/08-relationships-and-measures, title: "Relationships, date table, and measures" }
+  "09": { slug: labs/09-ai-metadata, title: AI metadata }
+  "10": { slug: labs/10-question-tester-after, title: "question-tester, after" }
+  "11": { slug: labs/11-copilot-cli-and-hooks, title: Copilot CLI and hooks }
+  "12": { slug: labs/12-pull-request-and-code-review, title: "Pull request, CI, and Copilot code review" }
+  "13": { slug: labs/13-cloud-agent, title: Copilot cloud agent }
+  "14": { slug: labs/14-build-your-own, title: "Build your own agent, skill, and prompt" }
+  "15": { slug: labs/15-clean-up, title: Clean up and next steps }
+
+# Assets that ship with the repo. Lab 03 and Lab 14 look for learner-created files beyond these.
+shipped:
+  instructions: [tmdl, pbir, python, powershell, evaluation, site]
+  skills: [pharmacy-model-conventions, tmdl-authoring, prep-data-for-ai, pbir-rebinding, business-question-evaluation, lab-page-authoring]
+  agents: [model-assessor, model-improver, question-tester, model-reviewer, lab-author]
+  prompts: [assess-model, improve-names-and-descriptions, fix-relationships-and-date-table, add-core-measures, write-ai-prep-drafts, answer-business-questions, compare-question-runs, review-model-pr, create-cloud-agent-issue, new-lab-page]
+
+checks:
+  - { id: L00-pwsh, lab: "00", anchor: step-2, description: "PowerShell 7.4 or later", hint: "Install PowerShell 7 with winget install Microsoft.PowerShell, then open a new terminal." }
+  - { id: L00-git, lab: "00", anchor: step-3, description: "Git 2.40+ with core.longpaths on Windows", hint: "Install Git for Windows, then run git config --global core.longpaths true." }
+  - { id: L00-python, lab: "00", anchor: step-4, description: "Python 3.12 or later", hint: "Install Python 3.12+ (winget install Python.Python.3.12) and reopen the terminal." }
+  - { id: L00-node, lab: "00", anchor: step-5, description: "Node.js 20 or later", hint: "Install Node.js LTS (winget install OpenJS.NodeJS.LTS)." }
+  - { id: L00-vscode, lab: "00", anchor: step-6, description: "VS Code on PATH", hint: "Install VS Code and enable 'Add to PATH'." }
+  - { id: L00-desktop, lab: "00", anchor: step-7, windows_only: true, description: "Power BI Desktop installed", hint: "Install Power BI Desktop from the Microsoft Store or the download center." }
+  - { id: L00-gh, lab: "00", anchor: step-8, required: false, description: "GitHub CLI (optional, used in Labs 12 and 13)", hint: "winget install GitHub.cli, then gh auth login." }
+  - { id: L00-copilot-cli, lab: "00", anchor: step-8, required: false, description: "Copilot CLI (used in Lab 11)", hint: "npm install -g @github/copilot, then run copilot once to sign in." }
+
+  - { id: L01-not-upstream, lab: "01", anchor: step-1, description: "You're working in your own copy, not the upstream repo", hint: "Create a repo from the template (Use this template), then clone that one." }
+  - { id: L01-upstream-remote, lab: "01", anchor: step-3, description: "Remote 'upstream' points at the lab repo", hint: "git remote add upstream https://github.com/sabajamalian/fabric-powerbi-ai-devops-demo.git" }
+  - { id: L01-venv, lab: "01", anchor: step-4, description: "Python environment .venv with the pharmacy_demo tools", hint: "Run pwsh ./scripts/Initialize-DevEnvironment.ps1" }
+  - { id: L01-data, lab: "01", anchor: step-5, description: "Synthetic data matches the fixed seed", hint: "Run pwsh ./scripts/New-SyntheticData.ps1 to regenerate it." }
+  - { id: L01-validation, lab: "01", anchor: step-6, description: "Repository validation passes", hint: "Run pwsh ./scripts/Invoke-Validation.ps1 and fix the first error it prints." }
+
+  - { id: L02-data-link, lab: "02", anchor: step-1, windows_only: true, description: "C:\\ContosoPharmacyDemo\\data points at this repo's data\\generated", hint: "Run pwsh ./scripts/Set-LocalDataLink.ps1" }
+  - { id: L02-desktop, lab: "02", anchor: step-3, windows_only: true, description: "Power BI Desktop has a model open", hint: "Open fabric\\ContosoPharmacy.pbip in Power BI Desktop and wait for the refresh to finish." }
+  - { id: L02-clean-tree, lab: "02", anchor: step-5, description: "Opening the project in Desktop left no unexpected changes under fabric/", hint: "Run git status fabric. If Desktop rewrote files, see the troubleshooting entry." }
+
+  - { id: L03-instructions, lab: "03", anchor: step-4, description: "You added a path instructions file whose applyTo matches repo files", hint: "Create .github/instructions/rules.instructions.md with applyTo: 'rules/**'." }
+
+  - { id: L04-mcp-config, lab: "04", anchor: step-2, description: ".vscode/mcp.json parses, has the Power BI Modeling MCP server, and no secret values", hint: "Restore .vscode/mcp.json from git and keep secrets in ${input:...} prompts or environment variables." }
+  - { id: L04-desktop, lab: "04", anchor: step-3, windows_only: true, description: "Power BI Desktop has a model open for MCP to connect to", hint: "Open fabric\\ContosoPharmacy.pbip in Power BI Desktop." }
+
+  - { id: L05-baseline-run, lab: "05", anchor: step-5, description: "evaluation/runs/local-baseline.json exists, matches the schema, and is graded", hint: "Run the question-tester agent with label local-baseline, then pwsh ./scripts/Grade-QuestionRun.ps1 -Run local-baseline." }
+
+  - { id: L06-assessment, lab: "06", anchor: step-4, description: "out/assessment.md has at least 8 findings with rule, severity, object, finding, and fix", hint: "Run /assess-model with the model-assessor agent. It writes out/assessment.md." }
+  - { id: L06-fabric-skill, lab: "06", anchor: step-2, required: false, description: "Skills for Fabric semantic-model-authoring skill is installed", hint: "Run apm install (see the lab) or /plugin install powerbi-authoring@fabric-collection in Copilot CLI." }
+
+  - { id: L07-names, lab: "07", anchor: step-3, description: "Tables and visible columns use business names (rule C01)", hint: "Ask model-improver to finish the renames listed by pwsh ./scripts/Test-ModelConventions.ps1 -Rule C01." }
+  - { id: L07-descriptions, lab: "07", anchor: step-4, description: "Every table and visible column has a description under 200 characters (C02, C03)", hint: "Run /improve-names-and-descriptions again for the objects listed." }
+  - { id: L07-hidden-and-summarize, lab: "07", anchor: step-4, description: "Keys are hidden and only additive columns summarize (C04, C05)", hint: "Set isHidden on keys and summarizeBy: none on IDs, years, and numbers." }
+  - { id: L07-lint, lab: "07", anchor: step-5, description: "TMDL lint passes", hint: "Run pwsh ./scripts/Invoke-Validation.ps1 -Only tmdl and fix the listed lines." }
+  - { id: L07-bindings, lab: "07", anchor: step-6, description: "Every report visual binds to a field that exists", hint: "Run pwsh ./scripts/Test-ReportBindings.ps1 and use the pbir-rebinding skill." }
+
+  - { id: L08-relationships, lab: "08", anchor: step-2, description: "Three single-direction relationships to Date, Store, and Medication (C07, C08)", hint: "Run /fix-relationships-and-date-table." }
+  - { id: L08-date-table, lab: "08", anchor: step-3, description: "Date table marked, sort-by columns set, auto date/time off (C09, C10, C11)", hint: "Run /fix-relationships-and-date-table and check the Date table in Desktop." }
+  - { id: L08-measures, lab: "08", anchor: step-4, description: "All 12 required measures exist with descriptions, format strings, and display folders (C02, C12, C13)", hint: "Run /add-core-measures." }
+  - { id: L08-fill-type, lab: "08", anchor: step-4, description: "Fill Type decodes N and R; the raw code is hidden (C06)", hint: "Add a Fill Type column and hide Fill Type Code." }
+  - { id: L08-lint, lab: "08", anchor: step-6, description: "TMDL lint and report bindings pass", hint: "Run pwsh ./scripts/Invoke-Validation.ps1." }
+  - { id: L08-dax-tests, lab: "08", anchor: step-7, windows_only: true, required: false, description: "Reference DAX returns the expected answers in Desktop", hint: "Run pwsh ./scripts/Invoke-DaxQuestionTests.ps1 with the model open in Desktop." }
+
+  - { id: L09-ai-prep-files, lab: "09", anchor: step-2, description: "fabric/ai-prep has all five draft files", hint: "Run /write-ai-prep-drafts." }
+  - { id: L09-ai-instructions, lab: "09", anchor: step-3, description: "AI instructions are under 10,000 characters and define the latest month, previous period, refill threshold, and processing time", hint: "Edit fabric/ai-prep/ai-instructions.md; the check output lists what's missing." }
+  - { id: L09-synonyms, lab: "09", anchor: step-4, description: "Synonyms cover the key measures and columns", hint: "Add the missing keys to fabric/ai-prep/synonyms.yaml." }
+  - { id: L09-verified-answers, lab: "09", anchor: step-5, description: "At least 5 verified answer candidates, one per question", hint: "Add candidates to fabric/ai-prep/verified-answers.yaml." }
+  - { id: L09-model-flags, lab: "09", anchor: step-6, description: "Q&A enabled and default labels set on Store Name and Medication Name (C14)", hint: "Set qnaEnabled in definition.pbism and isDefaultLabel on the two name columns." }
+
+  - { id: L10-after-run, lab: "10", anchor: step-2, description: "evaluation/runs/local-ai-ready.json exists and is graded", hint: "Run question-tester with label local-ai-ready, then Grade-QuestionRun.ps1." }
+  - { id: L10-improved, lab: "10", anchor: step-3, description: "local-ai-ready scores higher than local-baseline", hint: "Compare the runs with pwsh ./scripts/Compare-QuestionRuns.ps1 and review the failed questions." }
+  - { id: L10-comparison, lab: "10", anchor: step-3, description: "out/question-comparison.md exists", hint: "Run pwsh ./scripts/Compare-QuestionRuns.ps1 -Before local-baseline -After local-ai-ready." }
+
+  - { id: L11-hook-deny, lab: "11", anchor: step-4, description: "The hook log shows at least one denied tool call", hint: "Ask the agent in Copilot CLI to edit data/generated/dim_store.csv and watch the hook deny it." }
+  - { id: L11-hook-lint, lab: "11", anchor: step-5, description: "The hook log shows a postToolUse TMDL lint result", hint: "Ask the agent to edit a .tmdl file; the post-edit hook runs the lint." }
+
+  - { id: L12-pull-request, lab: "12", anchor: step-6, description: "A pull request from a feature branch exists with passing checks and a Copilot review", hint: "Push your branch, open a PR, and request a review from Copilot. Needs gh signed in." }
+
+  - { id: L13-cloud-agent-pr, lab: "13", anchor: step-4, description: "A pull request authored by Copilot exists", hint: "Assign a model-change issue to Copilot. Needs gh signed in." }
+
+  - { id: L14-skill, lab: "14", anchor: step-2, description: "A new skill folder whose SKILL.md name matches the folder and has a description", hint: "Create .github/skills/<your-skill>/SKILL.md with name and description frontmatter." }
+  - { id: L14-agent, lab: "14", anchor: step-3, description: "A new custom agent with description and tools", hint: "Create .github/agents/<your-agent>.agent.md." }
+  - { id: L14-prompt, lab: "14", anchor: step-4, description: "A new prompt file with a description", hint: "Create .github/prompts/<your-prompt>.prompt.md." }
+
+  - { id: L15-data-link-removed, lab: "15", anchor: step-2, windows_only: true, required: false, description: "The data junction is removed", hint: "Run pwsh ./scripts/Set-LocalDataLink.ps1 -Remove" }
+  - { id: L15-local-outputs, lab: "15", anchor: step-3, required: false, description: "Reports local outputs that remain (out/, .tools/, local runs). Deletes nothing.", hint: "Delete the listed folders yourself if you don't need them." }

@@ -1,0 +1,129 @@
+---
+title: "Copilot customization"
+description: "Every Copilot customization primitive used by the lab, where it lives, when it loads, and which lab teaches it."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import RepoFile from '~/components/RepoFile.astro';
+
+## Overview
+
+This repo uses every major Copilot customization primitive that the lab teaches. The generated catalogs are here: [Agents](/reference/agents/), [Skills](/reference/skills/), [Prompts](/reference/prompts/), and [Scripts](/reference/scripts/).
+
+The behavior below was checked against VS Code and GitHub Copilot docs in September 2026. Preview features can move, so recheck the docs before you use this as a production policy.
+
+## Repository instructions
+
+| Property | Value |
+|---|---|
+| What it is | Always-on repository custom instructions. |
+| Location | `.github/copilot-instructions.md` |
+| Frontmatter used here | None. |
+| Loads when | Copilot works in this repository. |
+| Lab | [Lab 03](/labs/03-instructions/) |
+
+<RepoFile path=".github/copilot-instructions.md" lines="1-31" />
+
+Use this for broad facts: synthetic data, repo layout, validation commands, and boundaries that apply to most tasks.
+
+## Path instructions
+
+Path instructions live in `.github/instructions/*.instructions.md`. VS Code docs define `applyTo`, `description`, and optional `name`. GitHub docs require `applyTo` for path-specific instructions and also document `excludeAgent` for GitHub surfaces. This repo uses `applyTo` and `description`.
+
+| File | `applyTo` | Lab |
+|---|---|---|
+| `tmdl.instructions.md` | `fabric/**/*.tmdl` | [Lab 03](/labs/03-instructions/) |
+| `pbir.instructions.md` | `fabric/**/*.Report/**` | [Lab 07](/labs/07-handoffs-names-descriptions/) |
+| `python.instructions.md` | `tools/python/**/*.py` | [Lab 01](/labs/01-get-your-copy/) |
+| `powershell.instructions.md` | `scripts/**/*.ps1` | [Lab 01](/labs/01-get-your-copy/) |
+| `evaluation.instructions.md` | `evaluation/**` | [Lab 05](/labs/05-question-tester-before/) |
+| `site.instructions.md` | `site/**` | [Lab 14](/labs/14-build-your-own/) and maintainers |
+
+<RepoFile path=".github/instructions/tmdl.instructions.md" />
+
+## `AGENTS.md`
+
+| Property | Value |
+|---|---|
+| What it is | Agent instructions shared by multiple coding agents. |
+| Location | `AGENTS.md` |
+| Frontmatter used here | None. |
+| Loads when | Agent-capable surfaces read repository agent instructions. |
+| Lab | [Lab 03](/labs/03-instructions/) |
+
+<RepoFile path="AGENTS.md" />
+
+Use it for short operating rules. Keep deep domain knowledge in skills.
+
+## Skills
+
+Agent Skills are folders with a `SKILL.md`. VS Code docs require `name` and `description`. The description should say what the skill does and when to use it.
+
+| Skill | Teaches |
+|---|---|
+| `pharmacy-model-conventions` | Names, descriptions, measures, relationships, and AI readiness rules. |
+| `tmdl-authoring` | Safe TMDL edits. |
+| `pbir-rebinding` | Report visual rebinding after renames. |
+| `business-question-evaluation` | Run files, grading, and comparison. |
+| `prep-data-for-ai` | AI instruction, schema, synonym, and verified-answer drafts. |
+| `lab-page-authoring` | Maintainer rules for lab pages. |
+
+<RepoFile path=".github/skills/pharmacy-model-conventions/SKILL.md" lines="1-35" />
+
+Skills load on demand when the description matches the task. See [Skills](/reference/skills/) for the generated list.
+
+## Custom agents
+
+Custom agents live in `.github/agents/*.agent.md`. VS Code docs list `name`, `description`, `argument-hint`, `tools`, `handoffs`, `model`, `target`, and other fields. GitHub cloud agent docs require `description`, allow `tools`, and document `mcp-servers` and `target`. This repo uses `name`, `description`, `argument-hint`, `tools`, and `handoffs`.
+
+<RepoFile path=".github/agents/model-assessor.agent.md" lines="1-12" />
+
+| Agent | What it does | Lab |
+|---|---|---|
+| `question-tester` | Answers and grades the five questions. | [Lab 05](/labs/05-question-tester-before/) |
+| `model-assessor` | Finds model gaps without editing model files. | [Lab 06](/labs/06-skills-and-assessor/) |
+| `model-improver` | Edits TMDL, PBIR, measures, relationships, and AI prep drafts. | [Lab 07](/labs/07-handoffs-names-descriptions/) |
+| `model-reviewer` | Reviews model and report diffs. | [Lab 12](/labs/12-pull-request-and-code-review/) |
+| `lab-author` | Maintainer page-writing agent. | [Lab 14](/labs/14-build-your-own/) |
+
+Handoffs switch to another agent and prefill a prompt. This repo uses `send: false` so you review the prompt before it runs.
+
+## Prompt files
+
+Prompt files live in `.github/prompts/*.prompt.md`. VS Code docs list optional `name`, `description`, `argument-hint`, `agent`, `model`, and `tools`. This repo uses `name`, `description`, `agent`, and sometimes `argument-hint`.
+
+<RepoFile path=".github/prompts/improve-names-and-descriptions.prompt.md" />
+
+Use prompt files for repeatable scoped tasks such as `/assess-model`, `/improve-names-and-descriptions`, `/add-core-measures`, `/answer-business-questions`, and `/review-model-pr`. See [Prompts](/reference/prompts/).
+
+<Aside type="caution" title="Prompt file caveat">
+VS Code docs dated September 2026 say prompt files are deprecated for Agent Host and are not loaded by Agent Host. They continue to work with the Local agent. Treat long-lived workflows as skill candidates.
+</Aside>
+
+## Hooks
+
+Hooks live in `.github/hooks/*.json`. They run shell commands at agent lifecycle events. This repo uses hooks to block protected files, block unsafe commands, log sessions, and lint TMDL after edits.
+
+<RepoFile path=".github/hooks/guardrails.json" />
+
+## MCP
+
+VS Code workspace MCP lives in `.vscode/mcp.json`. Copilot CLI uses `~/.copilot/mcp-config.json` by default. GitHub cloud agent and code review use repository MCP settings on GitHub, with a root `mcpServers` object.
+
+<RepoFile path=".vscode/mcp.json" />
+<RepoFile path="config/cloud-agent-mcp.template.json" />
+
+Use `${input:...}`, environment variables, or `COPILOT_MCP_` secrets and variables. Never commit secrets.
+
+## Decision table
+
+| Need | Use | Why |
+|---|---|---|
+| Repo-wide facts and commands | `copilot-instructions.md` | Always-on and simple. |
+| File-family rules | `.instructions.md` | `applyTo` keeps rules scoped. |
+| Cross-agent operating guidance | `AGENTS.md` | Multiple agent tools read it. |
+| Reusable domain workflow | Skill | Loads on demand with references. |
+| Role and tool boundary | Custom agent | Persona and tools move together. |
+| Repeatable slash command | Prompt file | It scopes one task. |
+| Deterministic policy | Hook | Code can deny or ask. |
+| Live tools | MCP | Tools reach Desktop, docs, or APIs. |

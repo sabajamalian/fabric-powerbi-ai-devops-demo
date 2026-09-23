@@ -1,0 +1,78 @@
+---
+title: "Fallbacks and reset"
+description: "What to do when an agent stalls, Desktop is unavailable, hooks fail, GitHub is slow, or you need a full lab reset."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Rule for live demos
+
+Do not debug in front of the room for more than 30 seconds. Switch to a saved artifact, restore a checkpoint, or move to the next segment.
+
+## Per-step fallbacks
+
+| Demo step | If it fails | Do this instead |
+|---|---|---|
+| Lab 05 before run | The agent stalls or answers badly. | Show the saved baseline run file and explain the score. |
+| Lab 06 assessor | The assessor misses an obvious issue. | Open the saved assessment notes or the generated rules checklist. |
+| Lab 07 handoff | The handoff does not appear. | Copy the saved handoff prompt into the improver agent manually. |
+| Lab 07 edits | The improver changes too much. | Restore the checkpoint and show the prepared diff. |
+| Lab 08 DAX tests | Power BI Desktop is closed or slow. | Show the saved `Invoke-DaxQuestionTests.ps1` output. |
+| Lab 10 comparison | The after run is not ready. | Use the sample run and [Expected results](/present/expected-results/). |
+| Lab 11 hook denial | The hook wrapper cannot find `.venv`. | Explain the wrapper's safe allow behavior and show the prepared denial output. |
+| Lab 12 PR review | Copilot review is delayed. | Switch to the pre-recorded PR or saved review comment. |
+| Lab 13 cloud agent | Cloud agent queue is slow. | Show the pre-opened issue, setup workflow, and completed cloud PR. |
+| Lab 14 extension | Time is short. | Show the smallest file change, then point to the full lab. |
+
+## Agent stalls
+
+If an agent stops making progress:
+
+1. Stop waiting after 30 seconds in the short demo or 60 seconds in the workshop.
+2. Say: "This is why the lab keeps sample runs and checkpoints. We do not need the live agent to be perfect to teach the workflow."
+3. Open the saved run or restore the checkpoint.
+4. Continue from the next planned segment.
+
+## Bad answer
+
+If an agent gives a wrong answer, do not hide it. Use it as the teaching point:
+
+- Baseline run: "This is the failure we expect before the model is AI-ready."
+- After run: "This is why we score against a deterministic oracle and keep DAX tests."
+- Review run: "This is why PR review remains human-owned."
+
+## Restore a checkpoint
+
+Start from a clean working tree. The restore script creates a new `lab/<checkpoint>-<timestamp>` branch for you:
+
+```powershell
+pwsh ./scripts/lab/Restore-LabCheckpoint.ps1 -Checkpoint lab02-start
+```
+
+Use a more specific checkpoint when you are restarting later in the demo. After restoring a checkpoint, run `Test-LabProgress.ps1 -Lab NN` for each lab listed in that checkpoint's `verify` field. `lab02-start` has no verify list.
+
+## Full reset
+
+When the working tree is no longer useful:
+
+```powershell
+git switch main
+git pull --ff-only
+pwsh ./scripts/lab/Restore-LabCheckpoint.ps1 -Checkpoint lab02-start
+```
+
+This gives you a clean branch at the early baseline. Push it only if you need a remote branch for a PR or cloud agent.
+
+## Pre-recorded PR path
+
+If GitHub, CI, or Copilot review is slow:
+
+1. Open the prepared PR.
+2. Show the PR template and changed files.
+3. Show the existing Copilot review comment.
+4. Show the CI run summary.
+5. Say: "This is the same workflow. We are using a completed run so we can stay on time."
+
+<Aside type="caution" title="Never reset shared work live">
+Only restore checkpoints and reset on a disposable branch in your own demo copy.
+</Aside>

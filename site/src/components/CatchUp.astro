@@ -1,0 +1,33 @@
+---
+import { Aside, Code } from '@astrojs/starlight/components';
+import { checkpoints } from '../lib/repo';
+import { url } from '../lib/url';
+
+interface Props {
+	checkpoint?: string;
+}
+const lab = Astro.locals.starlightRoute.entry.data.lab;
+const name = Astro.props.checkpoint ?? lab?.startCheckpoint ?? 'none';
+const info = checkpoints.find((c) => c.name === name);
+if (name !== 'none' && !info) throw new Error(`CatchUp: unknown checkpoint ${name}.`);
+---
+
+{
+	name === 'none' ? (
+		<Aside type="tip" title="Catch up">
+			This lab doesn't need a checkpoint. Start from wherever you are.
+		</Aside>
+	) : (
+		<Aside type="tip" title="Skipped a lab or want a clean start?">
+			<p>
+				Restore the <code>{name}</code> checkpoint ({info!.description.replace(/\.$/, '')}). The script refuses
+				to run if you have uncommitted changes, creates a new <code>lab/{name}-...</code> branch, and restores
+				only <code>fabric/</code> and <code>lab/samples/</code>. Close Power BI Desktop first.
+			</p>
+			<Code code={`pwsh ./scripts/lab/Restore-LabCheckpoint.ps1 -Checkpoint ${name}`} lang="powershell" />
+			<p>
+				It needs the <code>upstream</code> remote from <a href={url('labs/01-get-your-copy/#step-3')}>Lab 01, step 3</a>.
+			</p>
+		</Aside>
+	)
+}

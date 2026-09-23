@@ -1,0 +1,44 @@
+---
+interface Props {
+	question: string;
+	options: string[];
+	/** Zero-based index of the correct option. */
+	answer: number;
+	explanation: string;
+}
+const { question, options, answer, explanation } = Astro.props;
+if (answer < 0 || answer >= options.length) throw new Error(`KnowledgeCheck: answer ${answer} is out of range.`);
+const id = `kc-${Math.random().toString(36).slice(2, 10)}`;
+---
+
+<fieldset class="kc not-content" data-answer={answer}>
+	<legend>{question}</legend>
+	{
+		options.map((option, i) => (
+			<label>
+				<input type="radio" name={id} value={i} />
+				<span>{option}</span>
+			</label>
+		))
+	}
+	<p class="kc-result" aria-live="polite"></p>
+	<details>
+		<summary>Show the answer</summary>
+		<p><strong>{options[answer]}</strong></p>
+		<p>{explanation}</p>
+	</details>
+</fieldset>
+
+<script>
+	for (const set of document.querySelectorAll<HTMLFieldSetElement>('fieldset.kc')) {
+		const answer = Number(set.dataset.answer);
+		const result = set.querySelector<HTMLParagraphElement>('.kc-result')!;
+		set.addEventListener('change', (event) => {
+			const value = Number((event.target as HTMLInputElement).value);
+			const right = value === answer;
+			result.textContent = right ? 'Correct.' : 'Not quite. Try again, or open the answer below.';
+			result.dataset.state = right ? 'right' : 'wrong';
+			if (right) set.querySelector('details')?.setAttribute('open', '');
+		});
+	}
+</script>

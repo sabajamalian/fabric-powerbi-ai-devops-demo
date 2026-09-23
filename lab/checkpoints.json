@@ -1,0 +1,68 @@
+{
+  "$comment": "Lab checkpoints. Each tag lives on the upstream repo (commits on reference/ai-ready). Restore with scripts/lab/Restore-LabCheckpoint.ps1; maintainers build them with scripts/maintainer/New-LabCheckpoints.ps1.",
+  "upstream": "https://github.com/sabajamalian/fabric-powerbi-ai-devops-demo.git",
+  "branch": "reference/ai-ready",
+  "restore_paths": ["fabric", "lab/samples"],
+  "checkpoints": [
+    {
+      "name": "lab02-start",
+      "tag": "checkpoint/lab02-start",
+      "aliases": ["baseline-v1"],
+      "stage": 0,
+      "description": "The baseline model exactly as it ships on main.",
+      "verify": [],
+      "seed_baseline_run": false,
+      "seed_assessment": false
+    },
+    {
+      "name": "lab05-complete",
+      "tag": "checkpoint/lab05-complete",
+      "aliases": [],
+      "stage": 0,
+      "description": "Baseline model, plus a local-baseline question run copied from the committed sample.",
+      "verify": ["05"],
+      "seed_baseline_run": true,
+      "seed_assessment": false
+    },
+    {
+      "name": "lab06-complete",
+      "tag": "checkpoint/lab06-complete",
+      "aliases": [],
+      "stage": 0,
+      "description": "Adds a sample assessment (lab/samples/assessment.md, copied to out/assessment.md).",
+      "verify": ["05", "06"],
+      "seed_baseline_run": true,
+      "seed_assessment": true
+    },
+    {
+      "name": "lab07-complete",
+      "tag": "checkpoint/lab07-complete",
+      "aliases": [],
+      "stage": 1,
+      "description": "Business names, descriptions, hidden keys, display folders, and a rebound report.",
+      "verify": ["07"],
+      "seed_baseline_run": true,
+      "seed_assessment": true
+    },
+    {
+      "name": "lab08-complete",
+      "tag": "checkpoint/lab08-complete",
+      "aliases": [],
+      "stage": 2,
+      "description": "Adds relationships, the marked date table, Fill Type, and the core measures.",
+      "verify": ["07", "08"],
+      "seed_baseline_run": true,
+      "seed_assessment": true
+    },
+    {
+      "name": "lab09-complete",
+      "tag": "checkpoint/lab09-complete",
+      "aliases": ["ai-ready-v1"],
+      "stage": 3,
+      "description": "Adds AI metadata: Q&A on, default labels, and the fabric/ai-prep drafts.",
+      "verify": ["07", "08", "09"],
+      "seed_baseline_run": true,
+      "seed_assessment": true
+    }
+  ]
+}

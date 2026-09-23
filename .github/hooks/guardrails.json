@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "./scripts/hooks/run-hook.sh session-start",
+        "powershell": "pwsh -NoProfile -File ./scripts/hooks/run-hook.ps1 -HookEvent session-start",
+        "cwd": ".",
+        "timeoutSec": 20
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "./scripts/hooks/run-hook.sh pre-tool-use",
+        "powershell": "pwsh -NoProfile -File ./scripts/hooks/run-hook.ps1 -HookEvent pre-tool-use",
+        "cwd": ".",
+        "timeoutSec": 20
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "./scripts/hooks/run-hook.sh post-tool-use",
+        "powershell": "pwsh -NoProfile -File ./scripts/hooks/run-hook.ps1 -HookEvent post-tool-use",
+        "cwd": ".",
+        "timeoutSec": 30
+      }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "bash": "./scripts/hooks/run-hook.sh session-end",
+        "powershell": "pwsh -NoProfile -File ./scripts/hooks/run-hook.ps1 -HookEvent session-end",
+        "cwd": ".",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}

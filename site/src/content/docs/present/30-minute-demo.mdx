@@ -1,0 +1,100 @@
+---
+title: "30-minute demo"
+description: "A timed presenter script for the short version of the agentic Copilot and Power BI lab demo."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Goal
+
+Show the agentic loop quickly: evaluate the baseline, assess the model, improve with handoffs, compare results, show hook guardrails, and close with a pull request review.
+
+## Have pre-run
+
+- A clean baseline branch restored from the `lab02-start` checkpoint.
+- A sample Lab 05 baseline run file in `evaluation/runs/`.
+- A sample Lab 10 after run file.
+- A pre-opened issue for the cloud or PR story.
+- A pre-opened pull request with model changes and at least one Copilot review comment.
+- Power BI Desktop open to the PBIP if you plan to show model state.
+- Terminal history with validation commands ready.
+- Browser tabs for [Expected results](/present/expected-results/) and the active PR.
+
+## Timing table
+
+| Time | Segment | Show | Transition sentence |
+|---:|---|---|---|
+| 0:00 to 2:00 | Setup | Repo map and baseline model | "This repo treats Copilot customization as code, so every instruction, skill, agent, prompt, hook, and check is reviewable." |
+| 2:00 to 6:00 | Lab 05 before run | Baseline question-tester run or sample | "Now we need a score, not a vibe, so we ask the model the same business questions every time." |
+| 6:00 to 10:00 | Lab 06 assessor | `model-assessor` findings | "The assessor does not fix anything. It gives us a bounded model-improvement plan." |
+| 10:00 to 15:00 | Lab 07 handoff | Handoff to `model-improver` | "This is where the workflow becomes agentic: the right agent takes the next step with the right tools." |
+| 15:00 to 20:00 | Lab 10 comparison | Before and after score | "The proof is not that files changed. The proof is that the same questions get better answers." |
+| 20:00 to 24:00 | Lab 11 hook denial | Denied edit or command | "Instructions are guidance. Hooks are policy." |
+| 24:00 to 29:00 | Lab 12 PR review | PR, CI, model-reviewer, Copilot review | "The last mile is a pull request that humans and agents can both review." |
+| 29:00 to 30:00 | Close | Next labs | "If you have 60 minutes, add deterministic DAX tests, cloud agent setup, and your own lab extension." |
+
+## Segment script
+
+### 0:00 to 2:00, setup
+
+Open the repo root and point at `.github`, `fabric`, `evaluation`, `scripts`, and `site`.
+
+Say: "The baseline model is intentionally not AI-ready. The lab teaches the work needed to make it easier for Copilot and Power BI users to reason over the model."
+
+Link: [Lab 02](/labs/02-meet-the-baseline-model/).
+
+### 2:00 to 6:00, Lab 05 before run
+
+Run or show a saved baseline question-tester run. If running live, use the same five questions and save the JSON run.
+
+Say: "This is our before score. We keep the questions stable so improvements are measurable."
+
+Link: [Lab 05](/labs/05-question-tester-before/).
+
+### 6:00 to 10:00, Lab 06 assessor
+
+Open the `model-assessor` agent or a saved assessment. Highlight missing names, descriptions, relationships, measures, and AI metadata.
+
+Say: "Notice the assessor is constrained. It inspects and recommends. It does not rewrite the model."
+
+Link: [Lab 06](/labs/06-skills-and-assessor/).
+
+### 10:00 to 15:00, Lab 07 handoff
+
+Show the handoff from assessor to improver. Open changed TMDL files and the report binding work.
+
+Say: "The handoff keeps the finding, scope, and next action together, but you still review before the next agent runs."
+
+Link: [Lab 07](/labs/07-handoffs-names-descriptions/).
+
+### 15:00 to 20:00, Lab 10 comparison
+
+Show [Expected results](/present/expected-results/) and the before and after score.
+
+Say: "The AI-ready model does not just look cleaner. It gives the assistant better evidence for the same business questions."
+
+Link: [Lab 10](/labs/10-question-tester-after/).
+
+### 20:00 to 24:00, Lab 11 hook denial
+
+Trigger a safe denial, for example an attempted edit to `data/generated/` or a protected expected-answer read in a non-maintainer session.
+
+Say: "This is the difference between hoping agents behave and enforcing the rules in code."
+
+Link: [Lab 11](/labs/11-copilot-cli-and-hooks/).
+
+### 24:00 to 29:00, Lab 12 PR
+
+Open the pre-created pull request. Show CI, the PR template, CODEOWNERS, `model-reviewer`, and Copilot review comments.
+
+Say: "The repo is built so agents can help before, during, and after the pull request without bypassing review."
+
+Link: [Lab 12](/labs/12-pull-request-and-code-review/).
+
+## Fallbacks
+
+If the live agent stalls, show the saved run. If Desktop is slow, skip Desktop and show file diffs plus validation. If GitHub review is delayed, use the pre-recorded PR tab.
+
+<Aside type="tip" title="Keep the short demo moving">
+Do not debug live for more than 30 seconds. Restore a checkpoint or switch to a prepared artifact.
+</Aside>

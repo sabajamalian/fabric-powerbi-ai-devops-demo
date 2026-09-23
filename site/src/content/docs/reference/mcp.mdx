@@ -1,0 +1,111 @@
+---
+title: "MCP"
+description: "How the lab configures Power BI Modeling MCP, optional Fabric MCP, cloud agent MCP, secrets, approvals, and trust prompts."
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import RepoFile from '~/components/RepoFile.astro';
+
+## Why MCP matters here
+
+Model Context Protocol gives Copilot tools that are not just text editing. In this lab, MCP lets an agent inspect or edit a Power BI model through supported tools instead of guessing from file text only.
+
+The repo has two MCP files:
+
+| File | Use |
+|---|---|
+| `.vscode/mcp.json` | Local VS Code workspace MCP. |
+| `config/cloud-agent-mcp.template.json` | Template for GitHub repository MCP settings used by cloud agent and code review. |
+
+## VS Code workspace config
+
+<RepoFile path=".vscode/mcp.json" />
+
+The primary server is `powerbi-modeling-mcp`. It runs `npx` with `@microsoft/powerbi-modeling-mcp@0.5.0-beta.13` and starts the MCP server. It can work with the PBIP folder and, on Windows, the model open in Power BI Desktop.
+
+The optional `fabric-mcp` server runs `@microsoft/fabric-mcp@1.4.0`. The config says to start it from the MCP view only when you want it. Its docs tools can work without a tenant, but workspace operations need Fabric access.
+
+## Power BI Modeling MCP
+
+Power BI Modeling MCP can inspect a PBIP project and connect to an open Power BI Desktop model. Use it when you need model structure, measures, relationships, or Desktop-backed semantic model operations.
+
+Local prerequisites:
+
+- Windows.
+- Power BI Desktop installed.
+- The PBIP open in Desktop when you need live model operations.
+- Workspace trust accepted in VS Code.
+- MCP tool approval accepted for the specific tool call.
+
+## Optional Fabric MCP
+
+Fabric MCP is for tenant and workspace operations. It is not required for this lab. The core lab validates locally from files and generated CSVs, so learners do not need a Fabric tenant.
+
+If you enable Fabric MCP, keep secrets out of source. Use environment variables, VS Code inputs, or the GitHub MCP secret flow.
+
+## Cloud agent MCP template
+
+<RepoFile path="config/cloud-agent-mcp.template.json" />
+
+GitHub repository MCP settings use a root `mcpServers` object. For cloud agent and code review, copy the template into the repository MCP settings UI and adjust only values your organization allows.
+
+Cloud code review tools should be read-only. Do not give review tools write access to production services.
+
+## Secrets and inputs
+
+<Tabs>
+<TabItem label="VS Code input">
+
+Use `${input:name}` in `.vscode/mcp.json` when a value should be requested locally.
+
+```json
+{
+  "inputs": [
+    { "id": "fabricTenantId", "type": "promptString", "description": "Fabric tenant ID" }
+  ]
+}
+```
+
+</TabItem>
+<TabItem label="Environment variable">
+
+Use environment variables when the tool can read them without putting the value in JSON.
+
+```json
+{
+  "env": {
+    "FABRIC_TENANT_ID": "${env:FABRIC_TENANT_ID}"
+  }
+}
+```
+
+</TabItem>
+<TabItem label="GitHub MCP secret">
+
+For GitHub-hosted surfaces, use repository or organization MCP secrets and variables. GitHub documents `COPILOT_MCP_` variables for MCP configuration.
+
+</TabItem>
+</Tabs>
+
+<Aside type="danger" title="Do not commit secrets">
+Never put tenant IDs, tokens, connection strings, or passwords directly in `.vscode/mcp.json` or `config/cloud-agent-mcp.template.json`.
+</Aside>
+
+## Tool approval and trust
+
+Expect two prompts:
+
+1. Workspace trust or MCP server trust. You are allowing VS Code or GitHub to start the server.
+2. Tool approval. You are allowing a specific tool call.
+
+Approve narrowly. If an MCP server can write, review the arguments before approving.
+
+## When to use MCP instead of file edits
+
+| Task | Best path |
+|---|---|
+| Rename columns and add descriptions in TMDL | File edits plus validation are usually enough. |
+| Inspect live model metadata from Desktop | Power BI Modeling MCP. |
+| Compare Desktop state to PBIP files | Power BI Modeling MCP plus validation scripts. |
+| Work with Fabric workspace assets | Fabric MCP, only with a tenant and approved auth. |
+| Cloud PR review | Repository MCP settings, read-only tools only. |

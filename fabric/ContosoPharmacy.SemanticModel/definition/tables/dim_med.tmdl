@@ -1,0 +1,54 @@
+table dim_med
+
+	column med_key
+		dataType: int64
+		formatString: 0
+		summarizeBy: sum
+		sourceColumn: med_key
+
+		annotation SummarizationSetBy = User
+
+	column med_cd
+		dataType: string
+		summarizeBy: none
+		sourceColumn: med_cd
+
+		annotation SummarizationSetBy = User
+
+	column med_nm
+		dataType: string
+		summarizeBy: none
+		sourceColumn: med_nm
+
+		annotation SummarizationSetBy = User
+
+	column ther_cat
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ther_cat
+
+		annotation SummarizationSetBy = User
+
+	column dose_form
+		dataType: string
+		summarizeBy: none
+		sourceColumn: dose_form
+
+		annotation SummarizationSetBy = User
+
+	column gnrc_flg
+		dataType: string
+		summarizeBy: none
+		sourceColumn: gnrc_flg
+
+		annotation SummarizationSetBy = User
+
+	partition dim_med = m
+		mode: import
+		source =
+			let
+			    Source = Csv.Document(File.Contents(DataFolderPath & "dim_med.csv"), [Delimiter = ",", Columns = 6, Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+			    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+			    ChangedType = Table.TransformColumnTypes(PromotedHeaders, {{"med_key", Int64.Type}, {"med_cd", type text}, {"med_nm", type text}, {"ther_cat", type text}, {"dose_form", type text}, {"gnrc_flg", type text}}, "en-US")
+			in
+			    ChangedType

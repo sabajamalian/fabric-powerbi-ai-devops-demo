@@ -1,0 +1,21 @@
+---
+interface Props {
+	code: string;
+	/** Short text description of the diagram for screen readers. */
+	label: string;
+}
+const { code, label } = Astro.props;
+---
+
+<figure class="mermaid-figure not-content">
+	<pre class="mermaid" role="img" aria-label={label}>{code.trim()}</pre>
+	<figcaption>{label}</figcaption>
+</figure>
+
+<script>
+	// Bundled from node_modules at build time; nothing loads from a CDN.
+	import mermaid from 'mermaid';
+	const dark = document.documentElement.dataset.theme === 'dark';
+	mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default', securityLevel: 'strict' });
+	mermaid.run({ querySelector: 'pre.mermaid' });
+</script>

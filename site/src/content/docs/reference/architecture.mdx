@@ -1,0 +1,158 @@
+---
+title: "Architecture"
+description: "How the lab repository, Power BI project, Copilot customizations, scripts, CI, and lab site fit together."
+---
+
+import { FileTree } from '@astrojs/starlight/components';
+import RepoFile from '~/components/RepoFile.astro';
+import Mermaid from '~/components/Mermaid.astro';
+
+## Big picture
+
+This repo teaches agentic GitHub Copilot work with a Power BI Project. The semantic model is TMDL text. The report is PBIR JSON. The data is 100 percent synthetic retail pharmacy data for 12 stores, four regions, and dates from 2024-01-01 to 2025-12-31. No Fabric tenant is required.
+
+Every agent customization is source controlled. Instructions, skills, custom agents, prompt files, hooks, MCP config, validation scripts, questions, expected answers, and lab checks are reviewable files.
+
+## Repository layout
+
+<FileTree>
+
+- `.github/`
+  - `copilot-instructions.md`
+  - `instructions/`
+  - `agents/`
+  - `skills/`
+  - `prompts/`
+  - `hooks/`
+  - `workflows/`
+- `.vscode/`
+  - `mcp.json`
+- `config/`
+  - `cloud-agent-mcp.template.json`
+- `fabric/`
+  - `ContosoPharmacy.pbip`
+  - `ContosoPharmacy.SemanticModel/definition/`
+  - `ContosoPharmacy.Report/definition/`
+- `data/`
+  - `generated/`
+  - `schema/tables.json`
+- `evaluation/`
+  - `questions.yaml`
+  - `expected/`
+  - `run.schema.json`
+  - `rubric.md`
+- `rules/`
+- `scripts/`
+- `tools/python/pharmacy_demo/`
+- `lab/`
+- `site/`
+
+</FileTree>
+
+<RepoFile path=".github/copilot-instructions.md" lines="9-31" />
+
+## Local authoring loop
+
+<Mermaid
+  label="Local authoring loop"
+  code={`flowchart LR
+    VS[VS Code] --> Chat[Copilot agent mode]
+    Chat --> Instructions[Repo and path instructions]
+    Chat --> Agents[Custom agents and skills]
+    Chat --> MCP[Power BI Modeling MCP]
+    MCP --> Desktop[Power BI Desktop on Windows]
+    Desktop --> PBIP[PBIP project]
+    Chat --> Files[TMDL and PBIR files]
+    Files --> Scripts[Validation scripts]
+    Scripts --> Hooks[Hook log and lint feedback]
+    Hooks --> Chat
+  `}
+/>
+
+Power BI Desktop is Windows-only. The Power BI Modeling MCP server can connect to the open Desktop model or inspect the PBIP folder. The source-controlled config pins the package version.
+
+<RepoFile path=".vscode/mcp.json" />
+
+## GitHub loop
+
+<Mermaid
+  label="GitHub pull request and publishing loop"
+  code={`flowchart LR
+    Branch[Feature branch] --> PR[Pull request]
+    PR --> CI[CI validate and site jobs]
+    PR --> Review[Copilot code review]
+    Issue[Scoped issue] --> Cloud[Copilot cloud agent]
+    Cloud --> PR
+    CI --> Merge[Merge to main]
+    Merge --> Pages[GitHub Pages]
+    Pages --> Site[Self-paced lab site]
+  `}
+/>
+
+`ci.yml` has `validate`, `site`, and `dependency-review` jobs. `validate` runs on Ubuntu and Windows. `site` builds Astro Starlight. `dependency-review` runs only on pull requests.
+
+<RepoFile path=".github/workflows/ci.yml" lines="1-88" />
+
+`pages.yml` publishes only when `LAB_SITE_ENABLED` is `true`, so template copies do not publish by accident.
+
+<RepoFile path=".github/workflows/pages.yml" lines="1-65" />
+
+## Data and evaluation flow
+
+<Mermaid
+  label="Data, model, and evaluation flow"
+  code={`flowchart LR
+    Gen[pharmacy_demo.datagen] --> CSV[data/generated CSVs]
+    Gen --> Schema[data/schema/tables.json]
+    CSV --> TMDL[Semantic model TMDL]
+    TMDL --> PBIR[PBIR report]
+    CSV --> Oracle[DuckDB oracle]
+    Oracle --> Expected[evaluation/expected Q01 to Q05]
+    TMDL --> Tester[question-tester agent]
+    Tester --> Runs[evaluation/runs]
+    Expected --> Grader[grader]
+    Runs --> Grader
+  `}
+/>
+
+The DuckDB oracle computes expected answers directly from CSV files. It does not trust the semantic model.
+
+## Python package organization
+
+| Module | Owns |
+|---|---|
+| `cli.py` | `python -m pharmacy_demo` commands wrapped by PowerShell scripts. |
+| `datagen.py` | Deterministic synthetic data and schema generation. |
+| `oracle.py` | DuckDB expected answers. |
+| `evaluation.py` | Run schema validation, grading, and comparison. |
+| `tmdl.py` | TMDL parser and linter. |
+| `pbir.py` | PBIR report binding checks. |
+| `conventions.py` | Rules C01 to C15 from `rules/*.yaml`. |
+| `repo_checks.py` | Hygiene, identifier, secret, PHI-like, and prose checks. |
+| `customizations.py` | Static checks for Copilot customization files. |
+| `hooks.py` | Hook decisions and hook logging. |
+| `labcheck/checks.py` | Lab progress checks from `lab/checks.yaml`. |
+| `modelgen/*` | Maintainer-only checkpoint model generator. |
+
+<RepoFile path="tools/python/pharmacy_demo/hooks.py" lines="1-24" />
+
+## Technology and versions
+
+| Area | Version or pin | Source |
+|---|---:|---|
+| Node | `>=20` locally, Node `22` in workflows | `site/package.json`, workflows |
+| Astro | `7.3.2` | `site/package.json` |
+| Starlight | `0.42.1` | `site/package.json` |
+| Mermaid | `11.17.2` | `site/package.json` |
+| Python package | `pharmacy-demo` `1.0.0`, Python `>=3.12` | `tools/python/pyproject.toml` |
+| Runtime deps | `duckdb`, `PyYAML`, `jsonschema` | `tools/python/pyproject.toml` |
+| Locked deps | `duckdb==1.5.5`, `jsonschema==4.26.0`, `PyYAML==6.0.3` | `tools/python/requirements.txt` |
+| Dev deps | `pytest==9.1.1`, `ruff==0.16.7` | `tools/python/requirements-dev.txt` |
+| Power BI Modeling MCP | `@microsoft/powerbi-modeling-mcp@0.5.0-beta.13` | `.vscode/mcp.json` |
+| Fabric MCP | `@microsoft/fabric-mcp@1.4.0` | `.vscode/mcp.json` |
+| APM | `apm-cli` `0.31.0` | `apm.lock.yaml`, cloud setup workflow |
+| Skills for Fabric | `v0.3.17` | `apm.yml`, `apm.lock.yaml` |
+
+<RepoFile path="site/package.json" lines="1-28" />
+<RepoFile path="tools/python/pyproject.toml" />
+<RepoFile path="apm.lock.yaml" lines="1-25" />

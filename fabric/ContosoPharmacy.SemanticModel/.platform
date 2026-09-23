@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "ContosoPharmacy"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "8ee30069-9c79-5747-b7f2-04df8e1c813e"
+  }
+}

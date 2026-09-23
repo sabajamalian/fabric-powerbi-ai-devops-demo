@@ -1,0 +1,94 @@
+---
+title: "Facilitator checklist"
+description: "Day-before and hour-before setup checks for running the lab or demo smoothly."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Day before
+
+### Accounts and access
+
+- [ ] Confirm the presenter GitHub account can access the demo repository.
+- [ ] Confirm the demo GitHub account is not the same account you use for private work.
+- [ ] Confirm GitHub Copilot is enabled for the demo account.
+- [ ] Confirm Codespaces or local workstation access, depending on your delivery path.
+- [ ] Confirm Power BI Desktop is installed if you will show MCP or DAX tests live.
+- [ ] Confirm no Fabric tenant is required for the core lab.
+- [ ] Confirm repository secret scanning and push protection are enabled if you will show repository settings.
+
+### Repository and branches
+
+- [ ] Create a fresh branch for each live demo path.
+- [ ] Restore the starting checkpoint you plan to use.
+- [ ] Create or verify the pre-opened issue for cloud agent.
+- [ ] Create or verify the pre-opened pull request for review.
+- [ ] Save fallback artifacts for baseline run, after run, PR review, and hook denial.
+- [ ] Open [Expected results](/present/expected-results/) and confirm the page renders.
+
+### Validation
+
+Check the published checkpoint tags before a workshop:
+
+```powershell
+pwsh ./scripts/lab/Test-CheckpointTags.ps1 -Fetch upstream
+```
+
+For a checkpoint you restore locally, run the lab checks listed in its `verify` field. For example, `lab09-complete` verifies Labs 07, 08, and 09:
+
+```powershell
+pwsh ./scripts/lab/Restore-LabCheckpoint.ps1 -Checkpoint lab09-complete
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 07
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 08
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 09
+```
+
+`lab02-start` has no checkpoint-specific lab checks.
+
+### Presenter environment
+
+- [ ] Turn off notifications on the operating system.
+- [ ] Turn off email, calendar, and chat popups.
+- [ ] Clear browser tabs that could expose private information.
+- [ ] Sign out of unrelated GitHub accounts.
+- [ ] Set terminal font large enough for the room or recording.
+- [ ] Pin the demo terminal, VS Code, browser, and Power BI Desktop windows.
+- [ ] Confirm the projector or screen share shows the correct display.
+- [ ] Confirm microphone, captions, and recording if needed.
+
+## Hour before
+
+### Warm the tools
+
+- [ ] Open VS Code at the repo root.
+- [ ] Open Power BI Desktop to the PBIP if showing Desktop.
+- [ ] Start a terminal at the repo root.
+- [ ] Activate the Python environment if your flow requires it.
+- [ ] Run the exact quick check you plan to show.
+- [ ] Open the lab pages you will reference.
+- [ ] Open the pre-created issue and PR.
+- [ ] Open the fallback sample run files.
+
+### Confirm demo branches
+
+- [ ] Verify `git status --short` shows only expected changes.
+- [ ] Verify the current branch name is disposable.
+- [ ] Verify the branch matches the checkpoint you plan to start from.
+- [ ] Verify the PR branch is separate from the live branch.
+
+### Run one quick lab check
+
+```powershell
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 05
+```
+
+### Reduce risk
+
+- [ ] Copy the exact transition sentences from the demo page into presenter notes.
+- [ ] Keep fallback commands visible.
+- [ ] Keep the reset command ready.
+- [ ] Decide in advance when you will abandon a live agent run and show a sample.
+
+<Aside type="tip" title="Use a clean demo account">
+A separate demo GitHub account prevents notification leaks and makes Copilot review, PRs, and issue assignments easier to explain.
+</Aside>

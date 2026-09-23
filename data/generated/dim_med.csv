@@ -1,0 +1,61 @@
+med_key,med_cd,med_nm,ther_cat,dose_form,gnrc_flg
+1,M001,Atorvastatin 20 mg,Cardiovascular,Tablet,Y
+2,M002,Lisinopril 10 mg,Cardiovascular,Tablet,Y
+3,M003,Amlodipine 5 mg,Cardiovascular,Tablet,Y
+4,M004,Metoprolol Succinate 50 mg,Cardiovascular,Tablet,Y
+5,M005,Losartan 50 mg,Cardiovascular,Tablet,Y
+6,M006,Rosuvastatin 10 mg,Cardiovascular,Tablet,Y
+7,M007,Hydrochlorothiazide 25 mg,Cardiovascular,Tablet,Y
+8,M008,Carvedilol 12.5 mg,Cardiovascular,Tablet,Y
+9,M009,Metformin 500 mg,Diabetes,Tablet,Y
+10,M010,Glipizide 5 mg,Diabetes,Tablet,Y
+11,M011,Sitagliptin 100 mg,Diabetes,Tablet,N
+12,M012,Pioglitazone 30 mg,Diabetes,Tablet,Y
+13,M013,Insulin Glargine 100 units/mL,Diabetes,Injection,N
+14,M014,Empagliflozin 10 mg,Diabetes,Tablet,N
+15,M015,Glimepiride 2 mg,Diabetes,Tablet,Y
+16,M016,Albuterol HFA Inhaler,Respiratory,Inhaler,Y
+17,M017,Montelukast 10 mg,Respiratory,Tablet,Y
+18,M018,Fluticasone Nasal Spray,Respiratory,Spray,Y
+19,M019,Budesonide and Formoterol Inhaler,Respiratory,Inhaler,N
+20,M020,Cetirizine 10 mg,Respiratory,Tablet,Y
+21,M021,Benzonatate 100 mg,Respiratory,Capsule,Y
+22,M022,Tiotropium Inhaler,Respiratory,Inhaler,N
+23,M023,Loratadine 10 mg,Respiratory,Tablet,Y
+24,M024,Amoxicillin 500 mg,Anti-infective,Capsule,Y
+25,M025,Azithromycin 250 mg,Anti-infective,Tablet,Y
+26,M026,Cephalexin 500 mg,Anti-infective,Capsule,Y
+27,M027,Doxycycline 100 mg,Anti-infective,Capsule,Y
+28,M028,Ciprofloxacin 500 mg,Anti-infective,Tablet,Y
+29,M029,Oseltamivir 75 mg,Anti-infective,Capsule,Y
+30,M030,Nitrofurantoin 100 mg,Anti-infective,Capsule,Y
+31,M031,Ibuprofen 800 mg,Pain and Inflammation,Tablet,Y
+32,M032,Naproxen 500 mg,Pain and Inflammation,Tablet,Y
+33,M033,Meloxicam 15 mg,Pain and Inflammation,Tablet,Y
+34,M034,Celecoxib 200 mg,Pain and Inflammation,Capsule,Y
+35,M035,Cyclobenzaprine 10 mg,Pain and Inflammation,Tablet,Y
+36,M036,Prednisone 10 mg,Pain and Inflammation,Tablet,Y
+37,M037,Diclofenac Sodium Gel,Pain and Inflammation,Gel,Y
+38,M038,Sertraline 50 mg,Mental Health,Tablet,Y
+39,M039,Escitalopram 10 mg,Mental Health,Tablet,Y
+40,M040,Fluoxetine 20 mg,Mental Health,Capsule,Y
+41,M041,Bupropion XL 150 mg,Mental Health,Tablet,Y
+42,M042,Trazodone 50 mg,Mental Health,Tablet,Y
+43,M043,Duloxetine 30 mg,Mental Health,Capsule,Y
+44,M044,Buspirone 10 mg,Mental Health,Tablet,Y
+45,M045,Venlafaxine ER 75 mg,Mental Health,Capsule,Y
+46,M046,Triamcinolone Cream 0.1%,Dermatology,Cream,Y
+47,M047,Hydrocortisone Cream 2.5%,Dermatology,Cream,Y
+48,M048,Clindamycin Gel 1%,Dermatology,Gel,Y
+49,M049,Tretinoin Cream 0.05%,Dermatology,Cream,Y
+50,M050,Mupirocin Ointment 2%,Dermatology,Ointment,Y
+51,M051,Ketoconazole Cream 2%,Dermatology,Cream,Y
+52,M052,Clobetasol Ointment 0.05%,Dermatology,Ointment,Y
+53,M053,Omeprazole 20 mg,Gastrointestinal,Capsule,Y
+54,M054,Pantoprazole 40 mg,Gastrointestinal,Tablet,Y
+55,M055,Famotidine 20 mg,Gastrointestinal,Tablet,Y
+56,M056,Ondansetron 4 mg,Gastrointestinal,Tablet,Y
+57,M057,Esomeprazole 40 mg,Gastrointestinal,Capsule,Y
+58,M058,Docusate Sodium 100 mg,Gastrointestinal,Capsule,Y
+59,M059,Dicyclomine 20 mg,Gastrointestinal,Tablet,Y
+60,M060,Lansoprazole 30 mg,Gastrointestinal,Capsule,Y

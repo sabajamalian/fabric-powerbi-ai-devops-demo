@@ -1,0 +1,219 @@
+# Representative business questions for the Contoso Pharmacy semantic model.
+#
+# Synthetic data only. The expected answers in evaluation/expected/ are produced by the
+# DuckDB oracle (pwsh ./scripts/Update-ExpectedResults.ps1) from reference_sql, which runs
+# directly over the CSVs and never touches the semantic model.
+#
+# Agents answering these questions (the question-tester agent) must use the semantic model
+# only. They see what `python -m pharmacy_demo questions` prints: id, question, paraphrases,
+# and answer_columns. default_interpretation is hidden on purpose, so the model's AI
+# instructions (Lab 09) have to supply definitions like "latest month" and "previous period".
+# Agents must not read this file, reference_sql, reference_dax, or evaluation/expected/.
+#
+# answer_columns is the output contract: a run file reports each answer as rows keyed by
+# these names so the grader can compare them. It says nothing about how to get the answer.
+
+version: 1
+data_window: { start: "2024-01-01", end: "2025-12-31", latest_month: "2025-12", latest_quarter: "2025-Q4" }
+
+questions:
+  - id: Q01
+    question: How many prescriptions were filled by region and month?
+    paraphrases:
+      - Show monthly prescription fill counts for each region.
+      - What is the fill volume per region per month?
+      - Break down prescriptions filled by region and calendar month.
+      - How many scripts did each region fill every month?
+    default_interpretation: >-
+      Count every fill, new prescriptions and refills together, by store region and
+      calendar month for all 24 months in the data (January 2024 to December 2025).
+    answer_columns: [region, year_month, prescriptions_filled]
+    grading:
+      type: table
+      key_columns: [region, year_month]
+      partial: { type: row_fraction, min: 0.5 }
+    tolerance: { prescriptions_filled: 0 }
+    reference_sql: |
+      SELECT s.rgn AS region,
+             strftime(f.fill_dt, '%Y-%m') AS year_month,
+             count(*) AS prescriptions_filled
+      FROM fact_rx_fill f
+      JOIN dim_store s ON s.store_key = f.store_key
+      GROUP BY 1, 2
+      ORDER BY 1, 2
+    reference_dax: |
+      EVALUATE
+      SUMMARIZECOLUMNS(
+          'Store'[Region],
+          'Date'[Year Month],
+          "Prescriptions Filled", [Prescriptions Filled]
+      )
+      ORDER BY 'Store'[Region], 'Date'[Year Month]
+
+  - id: Q02
+    question: Which medication categories experienced the largest volume changes?
+    paraphrases:
+      - Which therapeutic categories moved the most in the latest month?
+      - Where did prescription volume change the most by drug category?
+      - Rank medication categories by how much their fill volume changed.
+      - Which categories grew or shrank the most last month?
+    default_interpretation: >-
+      Compare fills in the latest complete month in the data (December 2025) with the
+      previous month (November 2025) for each therapeutic category. Rank categories by the
+      absolute change in fills, largest first. Report both months, the change, and the
+      percent change as a fraction (0.25 means 25 percent).
+    answer_columns: [category, prior_month_fills, latest_month_fills, change, change_pct]
+    grading:
+      type: ranking
+      key_columns: [category]
+      rank_by: { column: change, absolute: true, descending: true }
+      partial: { type: top_key }
+    tolerance: { prior_month_fills: 0, latest_month_fills: 0, change: 0, change_pct: 0.001 }
+    reference_sql: |
+      WITH monthly AS (
+          SELECT m.ther_cat AS category,
+                 count(*) FILTER (WHERE strftime(f.fill_dt, '%Y-%m') = '2025-11') AS prior_month_fills,
+                 count(*) FILTER (WHERE strftime(f.fill_dt, '%Y-%m') = '2025-12') AS latest_month_fills
+          FROM fact_rx_fill f
+          JOIN dim_med m ON m.med_key = f.med_key
+          GROUP BY 1
+      )
+      SELECT category,
+             prior_month_fills,
+             latest_month_fills,
+             latest_month_fills - prior_month_fills AS change,
+             (latest_month_fills - prior_month_fills) / prior_month_fills AS change_pct
+      FROM monthly
+      ORDER BY abs(latest_month_fills - prior_month_fills) DESC, category
+    reference_dax: |
+      EVALUATE
+      SUMMARIZECOLUMNS(
+          'Medication'[Therapeutic Category],
+          TREATAS({ "2025-12" }, 'Date'[Year Month]),
+          "Prior Month Fills", [Prescriptions Filled PM],
+          "Latest Month Fills", [Prescriptions Filled],
+          "Change", [MoM Change],
+          "Change %", [MoM %]
+      )
+
+  - id: Q03
+    question: What was the average prescription processing time by store?
+    paraphrases:
+      - How long does each store take to process a prescription on average?
+      - Show mean processing minutes per store.
+      - Which stores are slowest at getting prescriptions ready?
+      - Average time from intake to ready for pickup, by store.
+    default_interpretation: >-
+      Average processing minutes per fill for each store across the full data window
+      (January 2024 to December 2025). Sort slowest first.
+    answer_columns: [store, avg_processing_minutes]
+    grading:
+      type: ranking
+      key_columns: [store]
+      rank_by: { column: avg_processing_minutes, absolute: false, descending: true }
+      partial: { type: top_key }
+    tolerance: { avg_processing_minutes: 0.05 }
+    reference_sql: |
+      SELECT s.store_nm AS store,
+             avg(f.proc_mins) AS avg_processing_minutes
+      FROM fact_rx_fill f
+      JOIN dim_store s ON s.store_key = f.store_key
+      GROUP BY 1
+      ORDER BY 2 DESC, 1
+    reference_dax: |
+      EVALUATE
+      SUMMARIZECOLUMNS(
+          'Store'[Store Name],
+          "Avg Processing Time (min)", [Avg Processing Time (min)]
+      )
+      ORDER BY [Avg Processing Time (min)] DESC
+
+  - id: Q04
+    question: Which stores had unusually high refill activity?
+    paraphrases:
+      - Which stores are refilling far more than the rest of the chain?
+      - Flag stores with abnormal refill rates.
+      - Where is refill activity unusually high?
+      - Which pharmacies stand out for refills recently?
+    default_interpretation: >-
+      For the latest quarter in the data (October to December 2025), compute each store's
+      refill rate (refills divided by all fills) and its index against the chain-wide refill
+      rate for the same quarter. A store is unusually high when its index is 1.25 or more.
+      Return only the flagged stores. Rates are fractions (0.8 means 80 percent).
+    answer_columns: [store, refill_rate, refill_rate_index]
+    grading:
+      type: set
+      key_columns: [store]
+      partial: { type: any_key }
+    tolerance: { refill_rate: 0.005, refill_rate_index: 0.01 }
+    reference_sql: |
+      WITH quarter_fills AS (
+          SELECT f.*, s.store_nm
+          FROM fact_rx_fill f
+          JOIN dim_store s ON s.store_key = f.store_key
+          WHERE f.fill_dt BETWEEN DATE '2025-10-01' AND DATE '2025-12-31'
+      ),
+      chain AS (
+          SELECT avg(CASE WHEN fill_typ = 'R' THEN 1.0 ELSE 0.0 END) AS chain_rate FROM quarter_fills
+      ),
+      by_store AS (
+          SELECT store_nm AS store,
+                 avg(CASE WHEN fill_typ = 'R' THEN 1.0 ELSE 0.0 END) AS refill_rate
+          FROM quarter_fills
+          GROUP BY 1
+      )
+      SELECT store, refill_rate, refill_rate / chain.chain_rate AS refill_rate_index
+      FROM by_store, chain
+      WHERE refill_rate / chain.chain_rate >= 1.25
+      ORDER BY refill_rate_index DESC, store
+    reference_dax: |
+      EVALUATE
+      FILTER(
+          SUMMARIZECOLUMNS(
+              'Store'[Store Name],
+              TREATAS({ "2025-Q4" }, 'Date'[Year Quarter]),
+              "Refill Rate", [Refill Rate],
+              "Refill Rate Index vs Chain", [Refill Rate Index vs Chain]
+          ),
+          [Refill Rate Index vs Chain] >= 1.25
+      )
+      ORDER BY [Refill Rate Index vs Chain] DESC
+
+  - id: Q05
+    question: How did prescription volume compare with the previous period?
+    paraphrases:
+      - Is prescription volume up or down versus the prior period?
+      - Compare this month's fills with last month.
+      - How much did total fills change period over period?
+      - What was the month-over-month change in prescriptions filled?
+    default_interpretation: >-
+      Compare total fills in the latest complete month in the data (December 2025) with the
+      previous month (November 2025). Report the period as YYYY-MM, both totals, the change,
+      and the percent change as a fraction.
+    answer_columns: [period, prescriptions_filled, previous_period_fills, change, change_pct]
+    grading:
+      type: table
+      key_columns: [period]
+      partial: { type: column_match, column: prescriptions_filled }
+    tolerance: { prescriptions_filled: 0, previous_period_fills: 0, change: 0, change_pct: 0.001 }
+    reference_sql: |
+      WITH totals AS (
+          SELECT count(*) FILTER (WHERE strftime(fill_dt, '%Y-%m') = '2025-12') AS latest,
+                 count(*) FILTER (WHERE strftime(fill_dt, '%Y-%m') = '2025-11') AS prior
+          FROM fact_rx_fill
+      )
+      SELECT '2025-12' AS period,
+             latest AS prescriptions_filled,
+             prior AS previous_period_fills,
+             latest - prior AS change,
+             (latest - prior) / prior AS change_pct
+      FROM totals
+    reference_dax: |
+      EVALUATE
+      ROW(
+          "Period", "2025-12",
+          "Prescriptions Filled", CALCULATE([Prescriptions Filled], 'Date'[Year Month] = "2025-12"),
+          "Previous Period Fills", CALCULATE([Prescriptions Filled PM], 'Date'[Year Month] = "2025-12"),
+          "Change", CALCULATE([MoM Change], 'Date'[Year Month] = "2025-12"),
+          "Change %", CALCULATE([MoM %], 'Date'[Year Month] = "2025-12")
+      )

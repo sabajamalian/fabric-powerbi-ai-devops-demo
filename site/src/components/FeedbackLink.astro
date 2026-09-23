@@ -1,0 +1,21 @@
+---
+import { repoUrl } from '../lib/repo';
+
+interface Props {
+	step?: string | number;
+}
+const data = Astro.locals.starlightRoute.entry.data;
+const params = new URLSearchParams({
+	template: 'lab-feedback.yml',
+	title: `[lab] ${data.title}${Astro.props.step ? `, step ${Astro.props.step}` : ''}`,
+	lab: data.title,
+	'site-version': `${new Date().toISOString().slice(0, 10)} build`,
+});
+if (Astro.props.step) params.set('step', `Step ${Astro.props.step}`);
+const href = `${repoUrl}/issues/new?${params.toString()}`;
+---
+
+<p class="feedback-link not-content">
+	Something wrong or unclear on this page? <a href={href}>Open a lab feedback issue</a>. The form is prefilled with
+	this page's name. Nothing is sent until you submit it, and please don't include screenshots of real accounts.
+</p>

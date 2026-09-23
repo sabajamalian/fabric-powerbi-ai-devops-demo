@@ -1,0 +1,9 @@
+relationship 'fact_rx_fill to dim_date'
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fact_rx_fill.fill_dt
+	toColumn: dim_date.cal_dt
+
+relationship 'fact_rx_fill to dim_store'
+	crossFilteringBehavior: bothDirections
+	fromColumn: fact_rx_fill.store_key
+	toColumn: dim_store.store_key

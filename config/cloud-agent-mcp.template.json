@@ -1,0 +1,33 @@
+{
+  "$comment": "Template for Copilot cloud agent MCP configuration. Paste the mcpServers object into your repository's Settings > Copilot > Coding agent > MCP configuration. It contains no secrets. The cloud agent runs on Linux without Power BI Desktop. Power BI Modeling MCP ships a Linux build and can open a PBIP folder, but this lab hasn't verified that on the cloud agent, so it's read-only here and the cloud agent labs don't depend on it.",
+  "mcpServers": {
+    "powerbi-modeling-mcp": {
+      "type": "local",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@microsoft/powerbi-modeling-mcp@0.5.0-beta.13",
+        "--start",
+        "--readonly"
+      ],
+      "tools": [
+        "*"
+      ]
+    },
+    "fabric-mcp": {
+      "type": "local",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@microsoft/fabric-mcp@1.4.0",
+        "server",
+        "start",
+        "--mode",
+        "all"
+      ],
+      "tools": [
+        "*"
+      ]
+    }
+  }
+}

@@ -1,0 +1,300 @@
+---
+title: "Lab 13: Copilot cloud agent"
+description: "Assign a scoped semantic model change to Copilot cloud agent, follow its session log, and review the pull request it creates."
+sidebar:
+  label: "13. Copilot cloud agent"
+lab:
+  number: 13
+  durationMinutes: 35
+  level: advanced
+  platforms: [windows, macos-file-mode]
+  requiresDesktop: false
+  surfaces: [github, cloud-agent, vscode]
+  primitives: [cloud-agent, custom-agent, skill, hook, apm]
+  startCheckpoint: lab09-complete
+  endCheckpoint: lab09-complete
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import WhatVaries from '~/components/WhatVaries.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+Some model work is clear enough to hand to an agent and review later. Copilot cloud agent is built for that kind of scoped issue. It runs in a GitHub Actions-backed environment, creates a branch, pushes commits, and raises a pull request for you to review. In this lab you give it a small AI-readiness change: add descriptions and synonyms for **Payer Type**, whose source column is `payer_typ`.
+
+The cloud agent runs on Linux by default. It doesn't have Power BI Desktop, so this lab avoids live Desktop and DAX work. The agent edits TMDL and YAML as text, then relies on the repo's lint, report binding checks, and bash hooks.
+
+## Concepts
+
+- **Copilot cloud agent:** a GitHub-hosted agent that researches an issue, plans, edits code, validates, and pushes a branch. It is different from local VS Code agent mode because it works in its own cloud session. <PlatformBadge kind="paid-plan" />
+- **Setup steps:** `.github/workflows/copilot-setup-steps.yml` prepares the agent environment before work starts. The job must be named `copilot-setup-steps`.
+- **Custom cloud agent:** the assignment dialog can pick a repository custom agent, such as `model-improver`, so the cloud task uses the same role and tool boundaries you used locally.
+- **Session log:** the GitHub Agents view shows setup, commands, file changes, validation, and follow-up prompts. Use it to audit what the agent did.
+- **Iteration by PR comment:** after the agent opens a pull request, a top-level `@copilot` comment asks it to continue on that PR branch.
+
+## Before you begin
+
+- You finished [Lab 12](/labs/12-pull-request-and-code-review/) or restored `lab09-complete` and pushed the repo to your own GitHub copy.
+- You have GitHub CLI signed in, because the verify check reads pull requests with `gh`.
+- Your Copilot plan supports Copilot cloud agent, and the repository has the feature enabled. Business and Enterprise seats may also need an org admin policy. <PlatformBadge kind="paid-plan" />
+- The upstream branch has `.github/workflows/copilot-setup-steps.yml` on the default branch. GitHub only uses setup steps after they are on the default branch.
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Read the cloud setup
+
+Start by checking what the cloud agent gets before it starts the issue.
+
+1. In VS Code, open **Explorer**: **Ctrl+Shift+E** (macOS: **Cmd+Shift+E**), or **View > Explorer**.
+2. Open `.github/workflows/copilot-setup-steps.yml`.
+3. Check the job name, runner, pinned setup actions, Python version, Node version, and APM install.
+4. Open `.github/hooks/guardrails.json` and note that every hook has a bash command and a PowerShell command. On the cloud Linux runner, the bash form runs.
+
+The setup job installs the same repo tools you used locally and installs the pinned Skills for Fabric skill with APM:
+
+<RepoFile path=".github/workflows/copilot-setup-steps.yml" lines="16-43" />
+
+The hooks are configured for both shells:
+
+<RepoFile path=".github/hooks/guardrails.json" lines="13-29" />
+
+**You should see:** `runs-on: ubuntu-latest`, Python `3.12`, Node `22`, `apm-cli==0.31.0`, and `./scripts/hooks/run-hook.sh` for Linux hook events.
+
+<Checkpoint lab="13" step="1" />
+
+### Step 2. Draft the model-change issue
+
+The cloud agent works best when the issue states the object, the source column, and the acceptance checks. Use the prompt file to draft the issue, then paste it into GitHub.
+
+1. Open Copilot Chat in VS Code: **Ctrl+Alt+I** (macOS: **Ctrl+Cmd+I**), or **View > Chat**.
+2. Open the Command Palette: **Ctrl+Shift+P** (macOS: **Cmd+Shift+P**), then run **Chat: Run Prompt**.
+3. Pick **create-cloud-agent-issue**.
+4. When prompted for the change, enter:
+
+```text
+Add descriptions and synonyms for Payer Type.
+```
+
+5. Review the drafted issue. Make sure it uses these facts:
+   - Goal: make Payer Type clearer for people and AI tools.
+   - Objects in scope: `Prescription Fill` table, `Payer Type` column, source column `payer_typ`, and `fabric/ai-prep/synonyms.yaml`.
+   - Out of scope: no new measures, no Desktop-only work, no real data.
+   - Acceptance: `pwsh ./scripts/Invoke-Validation.ps1` and `pwsh ./scripts/Test-ReportBindings.ps1` pass.
+6. On GitHub.com, open your repo, then **Issues > New issue > Semantic model change**.
+7. Paste the text into the form fields and select **Submit new issue**.
+
+The issue form already asks for the fields the cloud agent needs:
+
+<RepoFile path=".github/ISSUE_TEMPLATE/model-change.yml" lines="10-45" />
+
+The prompt reminds you not to ask for Desktop or live DAX work:
+
+<RepoFile path=".github/prompts/create-cloud-agent-issue.prompt.md" lines="11-22" />
+
+**You should see:** a new issue titled similar to `[model] Add descriptions and synonyms for Payer Type`, labeled `model-change`, with `model-improver` listed as the suggested custom agent.
+
+<Checkpoint lab="13" step="2" />
+
+### Step 3. Assign the issue to Copilot
+
+<PlatformBadge kind="paid-plan" />
+
+GitHub's current issue flow starts a cloud agent session by assigning the issue to Copilot. You can also choose a custom agent in the assignment dialog.
+
+1. Open the issue you created.
+2. In the right sidebar, select **Assignees**.
+3. Select **Copilot** from the assignee list.
+4. In the **Assign to Copilot** dialog, keep the target repository as your lab copy and the starting branch as the default branch.
+5. Open the agent dropdown, the Copilot icon in the dialog, and choose **model-improver**.
+6. In **Optional prompt**, add:
+
+```text
+Use the model-improver agent. Edit TMDL and fabric/ai-prep text files only. Do not require Power BI Desktop. Keep sourceColumn payer_typ unchanged. Run pwsh ./scripts/Invoke-Validation.ps1 before opening the PR.
+```
+
+7. Start the task.
+
+<Aside type="note" title="Why not comment more on the issue afterward?">
+GitHub sends Copilot the issue title, body, current comments, and optional prompt at assignment time. If you add new information after assignment, put it on the pull request that Copilot opens.
+</Aside>
+
+**You should see:** an issue timeline event saying Copilot started work, and a new session in the repository **Agents** tab or the global Agents page.
+
+<WhatVaries mustMatch={['Copilot is the issue assignee', 'The session uses the model-improver custom agent', 'The task mentions Payer Type and payer_typ']}>
+The exact dialog labels can shift while the feature is in preview. Look for the Copilot assignee, repository, branch, custom agent, and optional prompt controls.
+</WhatVaries>
+
+<Checkpoint lab="13" step="3" />
+
+### Step 4. Follow the session and open the PR
+
+Open the session log while Copilot works. This step is the lab check anchor: it passes when a pull request authored by Copilot exists.
+
+1. On GitHub, open your repository.
+2. Select the **Agents** tab, or open the global Agents panel from the top-right GitHub navigation and choose this session.
+3. Watch the setup section. It should show `copilot-setup-steps`, Python setup, Node setup, initialization, and APM install.
+4. Watch the command section. You should see validation commands such as `pwsh ./scripts/Invoke-Validation.ps1`.
+5. When Copilot finishes, select **Open pull request** if it hasn't already opened one.
+6. Open the pull request.
+
+**You should see:** a pull request authored by Copilot. The changed files should be limited to model metadata and AI-prep text files, such as `fabric/ContosoPharmacy.SemanticModel/definition/tables/Prescription Fill.tmdl` and `fabric/ai-prep/synonyms.yaml`.
+
+<Aside type="caution" title="No Desktop in the cloud session">
+The cloud runner is Linux and doesn't run Power BI Desktop. That's expected. This repo is designed so the agent can edit TMDL and PBIR as text, then validate with lint and binding checks.
+</Aside>
+
+<Checkpoint lab="13" step="4" />
+
+### Step 5. Review and steer the pull request
+
+Now treat the agent's work like any other pull request.
+
+1. In the PR, open **Files changed**.
+2. Confirm `sourceColumn: payer_typ` did not change.
+3. Confirm the `Payer Type` description is short, business-facing, and not medical advice.
+4. Confirm `fabric/ai-prep/synonyms.yaml` adds payer-related phrases, such as payer, insurance type, plan type, payment type, and payer mix.
+5. Open the **Checks** tab and wait for CI.
+6. Add a top-level PR comment:
+
+```text
+@copilot also add an example prompt about payer mix to the changed AI-prep file, if there is an appropriate section. Keep validation green.
+```
+
+7. Watch for an eyes reaction and a timeline event that Copilot started work.
+
+**You should see:** a new Copilot session tied to the PR, then a follow-up commit or comment. If the requested file doesn't have an appropriate section, Copilot should explain that instead of inventing a new file.
+
+<WhatVaries mustMatch={['CI remains green or the PR explains a failing check', 'Payer Type keeps sourceColumn payer_typ', 'The PR branch remains reviewable']}>
+Copilot may add the example prompt in a different AI-prep file than you expect, or may explain why it did not. The important part is that it responds on the PR branch and keeps the scope tight.
+</WhatVaries>
+
+<Checkpoint lab="13" step="5" />
+
+### Step 6. Merge or close the PR
+
+You decide whether to keep the change in your lab copy.
+
+1. If the PR is useful, select **Merge pull request** on GitHub, then **Confirm merge**.
+2. If you don't want the change, select **Close pull request**. Closing is fine for the lab check, because the check only verifies that a Copilot-authored PR exists.
+3. Back in VS Code, update your local default branch if you merged:
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git switch main
+git pull
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git switch main
+git pull
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** either a merged PR and local branch updated, or a closed PR you can still inspect later.
+
+<Checkpoint lab="13" step="6" />
+
+## Verify your work
+
+<VerifyStep lab="13" />
+
+## Troubleshooting
+
+<details>
+<summary>Copilot is not listed as an assignee</summary>
+
+Copilot cloud agent is not enabled for the repository, your plan doesn't include it, or an org policy blocks it. The feature requires a paid Copilot plan. For Business and Enterprise, ask an admin to enable Copilot cloud agent for the organization and repository.
+
+</details>
+
+<details>
+<summary>The setup steps fail before Copilot starts editing</summary>
+
+Open the session log and expand `copilot-setup-steps`. The common causes are package downloads blocked by firewall rules, a changed APM installer, or a workflow edit that changed the job name. The job must be named `copilot-setup-steps`, and the repository firewall must allow GitHub Actions and package registry traffic.
+
+</details>
+
+<details>
+<summary>Copilot tries to use Power BI Desktop or live DAX</summary>
+
+Comment on the PR: `@copilot do not use Power BI Desktop or live DAX in this cloud session. Edit TMDL and AI-prep files as text, then run pwsh ./scripts/Invoke-Validation.ps1.` The cloud agent can use the text model checks without Desktop.
+
+</details>
+
+<details>
+<summary>The PR changes too many files</summary>
+
+Ask Copilot to narrow the scope on the PR: `@copilot revert unrelated files. Keep only the Payer Type description and synonyms changes, then rerun validation.` If it still overreaches, close the PR and start a smaller issue.
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="Why does the Lab 13 issue include acceptance criteria instead of only a goal?"
+	options={[
+		'Cloud agent needs exact checks it can run without asking more questions.',
+		'Issue forms require at least three checkboxes for GitHub to save them.',
+		'Acceptance criteria replace code review, so you can merge without looking.',
+	]}
+	answer={0}
+	explanation="The agent can work in the background only when it knows what done means. Checks such as Invoke-Validation.ps1 give it a concrete finish line, but you still review the PR."
+/>
+
+<KnowledgeCheck
+	question="What does the cloud agent do when you assign an issue to Copilot?"
+	options={[
+		'It edits your local working tree through VS Code.',
+		'It starts a GitHub-hosted session, creates a branch, pushes changes, and raises a PR.',
+		'It opens Power BI Desktop on your Windows machine.',
+	]}
+	answer={1}
+	explanation="Cloud agent runs in a GitHub Actions-backed environment. It does not use your local Desktop session."
+/>
+
+<KnowledgeCheck
+	question="Where should you add new instructions after Copilot has already been assigned the issue?"
+	options={[
+		'As another issue comment, because Copilot watches issue comments live.',
+		'As a top-level PR comment with @copilot, because the PR branch is where follow-up work happens.',
+		'In evaluation/expected so the agent reads the desired answer.',
+	]}
+	answer={1}
+	explanation="GitHub sends the current issue context at assignment time. Use @copilot on the PR for follow-up work."
+/>
+
+## Recap and next
+
+You delegated a small semantic model task to Copilot cloud agent, picked the `model-improver` custom agent, watched the setup and validation in the session log, and reviewed a Copilot-authored pull request. You also saw why cloud tasks need tight scope when Desktop isn't available.
+
+<NextLab current="13" />
+
+## Go further
+
+- Create a second issue that asks Copilot to improve one description only. Compare the PR size with this lab's PR.
+- Open the session log from the Copilot-authored commit link and note which validation command gave you the most confidence.
+- Try the same assignment without choosing `model-improver`, then close the session after the plan. Compare the plan to the custom agent run.
+
+<FeedbackLink />

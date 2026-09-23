@@ -1,0 +1,433 @@
+---
+title: "Lab 12: Pull request, CI, and Copilot code review"
+description: "Push the AI-ready model branch, open a pull request, validate CI, request Copilot code review, and fix a deliberate failure."
+sidebar:
+  label: "12. PR, CI, code review"
+lab:
+  number: 12
+  durationMinutes: 40
+  level: advanced
+  platforms: [windows, macos]
+  requiresDesktop: false
+  surfaces: [github, code-review, vscode]
+  primitives: [code-review, prompt-file, custom-agent, instructions]
+  startCheckpoint: lab09-complete
+  endCheckpoint: none
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import WhatVaries from '~/components/WhatVaries.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+Model-as-code work should end in a pull request, not in a local folder. CI proves the model parses, report bindings resolve, scripts pass, and the lab site still builds. Copilot code review adds another reviewer that reads the diff and the repo instructions. You also compare it with the local `/review-model-pr` prompt so you can see what each surface catches.
+
+## Concepts
+
+- **Pull request:** the review boundary for semantic model, report, and AI metadata changes. See [Branching and pull requests](/reference/branching-and-pull-requests/).
+- **CI:** this repo's tenant-free GitHub Actions workflow. It runs on pull requests without Fabric, Power BI, or secrets. See [CI workflows](/reference/ci-workflows/).
+- **Copilot code review:** a paid GitHub Copilot feature that you request from the PR sidebar. It leaves comments like a reviewer, usually as a comment review.
+- **Local model review:** the `/review-model-pr` prompt with the model-reviewer agent. It can run local validation and focus on Power BI model conventions.
+- **Ruleset review:** optional repository settings can request Copilot review automatically on pull requests.
+
+## Before you begin
+
+- You have your own GitHub copy of the repo from [Lab 01](/labs/01-get-your-copy/).
+- You are on the feature branch that contains Labs 07 to 09, usually `feature/ai-ready-names`.
+- `gh auth status` succeeds, or you know how to open a PR in the GitHub web UI.
+- You have a paid Copilot plan or org access for Copilot code review. <PlatformBadge kind="paid-plan" />
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Read what CI and review will check
+
+Open the repo review files before you push.
+
+1. Open Quick Open: **Ctrl+P** (macOS: **Cmd+P**), or **Go > Go to File**.
+2. Open `.github/workflows/ci.yml`.
+3. Open `.github/pull_request_template.md`.
+4. Open `.github/prompts/review-model-pr.prompt.md` and `.github/agents/model-reviewer.agent.md`.
+5. Open `.github/instructions/tmdl.instructions.md` and `.github/instructions/pbir.instructions.md`.
+
+The workflow's real job names are in the file:
+
+<RepoFile path=".github/workflows/ci.yml" lines="17-114" />
+
+The model reviewer is stricter about report bindings and lineage than a generic code review:
+
+<RepoFile path=".github/agents/model-reviewer.agent.md" lines="26-40" />
+
+**You should see:** CI jobs named `Validate (ubuntu-latest)`, `Validate (windows-latest)`, `Lab site build`, and `Dependency review` on pull requests.
+
+<Checkpoint lab="12" step="1" />
+
+### Step 2. Run local validation before you push
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/Invoke-Validation.ps1
+pwsh ./scripts/Test-ReportBindings.ps1
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/Invoke-Validation.ps1
+pwsh ./scripts/Test-ReportBindings.ps1
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** validation passes and report bindings pass. If either fails, fix it before opening a PR. A PR is for review, not for discovering basic parse failures.
+
+<Checkpoint lab="12" step="2" />
+
+### Step 3. Push your feature branch to your copy
+
+Push to `origin`, which should be your own repo, not upstream.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git remote -v
+git branch --show-current
+git push -u origin feature/ai-ready-names
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git remote -v
+git branch --show-current
+git push -u origin feature/ai-ready-names
+```
+
+</TabItem>
+</Tabs>
+
+If your branch has a different name, use the name from `git branch --show-current`.
+
+**You should see:** `origin` points at `https://github.com/<your-github-user>/<your-repo>.git`, and Git prints a URL for opening a pull request.
+
+<Checkpoint lab="12" step="3" />
+
+### Step 4. Open the pull request
+
+Use GitHub CLI or the web UI.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+gh pr create --fill
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+gh pr create --fill
+```
+
+</TabItem>
+</Tabs>
+
+For the web UI:
+
+1. Open your repo on GitHub.com.
+2. Select **Pull requests > New pull request**.
+3. Set **base** to `main` and **compare** to `feature/ai-ready-names`.
+4. Select **Create pull request**.
+5. Fill the template. Paste the Lab 10 comparison output in **Business question results** if you have it.
+
+The template tells reviewers what evidence to look for:
+
+<RepoFile path=".github/pull_request_template.md" />
+
+**You should see:** a pull request from your feature branch into `main`, with the template sections filled in and no `.pbi` or local output files in the file list.
+
+<Checkpoint lab="12" step="4" />
+
+### Step 5. Watch the CI checks
+
+Open the PR's **Checks** tab, or use GitHub CLI.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+gh pr checks --watch
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+gh pr checks --watch
+```
+
+</TabItem>
+</Tabs>
+
+1. In the GitHub web UI, open the pull request.
+2. Select **Checks**.
+3. Open **Validate (ubuntu-latest)** and find **Initialize and validate**.
+4. Open **Validate (windows-latest)** and find **Pester** plus **PSScriptAnalyzer**.
+5. Open **Lab site build** if you changed site files.
+
+**You should see:** green checks for `Validate (ubuntu-latest)`, `Validate (windows-latest)`, `Lab site build`, and `Dependency review`. The validate job runs TMDL lint, report bindings, expected answers, questions, runs, customization checks, and hygiene through `Initialize-DevEnvironment.ps1`.
+
+<Checkpoint lab="12" step="5" />
+
+### Step 6. Request Copilot code review
+
+<PlatformBadge kind="paid-plan" />
+
+GitHub Docs say Copilot code review is requested from the PR sidebar.
+
+1. Open the pull request on GitHub.com.
+2. In the right sidebar, find **Reviewers**.
+3. Next to **Copilot**, select **Request**.
+4. Wait for the review to finish. GitHub Docs say it usually takes less than 30 seconds, but busy PRs can take longer.
+5. Read each comment. Look for severity labels such as **High**, **Medium**, or **Low**.
+6. If you push more commits later, use the re-request button next to Copilot in **Reviewers**.
+
+**You should see:** a Copilot review on the PR and passing checks from step 5. This satisfies the Lab 12 check when the PR comes from a feature branch, not `main` or `master`.
+
+<WhatVaries mustMatch={['The PR head branch is not main or master', 'The status checks are green', 'At least one PR review is authored by Copilot']}>
+Copilot may leave no inline comments if it doesn't find issues. The review record still counts.
+</WhatVaries>
+
+<Checkpoint lab="12" step="6" />
+
+### Step 7. Compare with the local model-reviewer prompt
+
+Run the local reviewer from VS Code.
+
+1. Open Copilot Chat: **Ctrl+Alt+I** (macOS: **Ctrl+Cmd+I**), or **View > Chat**.
+2. Pick **model-reviewer** from the agent dropdown.
+3. Type `/review-model-pr base=main` and press **Enter**.
+4. Approve the validation commands after reading them.
+
+The prompt is short because the agent file carries the review criteria:
+
+<RepoFile path=".github/prompts/review-model-pr.prompt.md" />
+
+Path instructions shape both local and GitHub review. For example, TMDL review should preserve `lineageTag`, and PBIR review should update every `Entity`, `Property`, and `queryRef` after a rename:
+
+<RepoFile path=".github/instructions/tmdl.instructions.md" lines="7-17" />
+
+<RepoFile path=".github/instructions/pbir.instructions.md" lines="7-12" />
+
+**You should see:** a local review with **Blocking**, **Suggestions**, **Questions**, and **Validation** sections when relevant. Compare it with Copilot's GitHub review. The local agent is usually better at running repo scripts; GitHub code review is better at PR conversation and inline comments.
+
+<Checkpoint lab="12" step="7" />
+
+### Step 8. Break report bindings on purpose
+
+Now create a controlled failure so you can see CI catch it. You will fix it in the next step.
+
+1. Open `fabric/ContosoPharmacy.SemanticModel/definition/tables/Store.tmdl`.
+2. Rename the `Region` column to `Sales Region`.
+3. Do not update the report PBIR files.
+4. Commit and push the broken change.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git add fabric/ContosoPharmacy.SemanticModel/definition/tables/Store.tmdl
+git commit -m "Test CI report binding failure"
+git push
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git add fabric/ContosoPharmacy.SemanticModel/definition/tables/Store.tmdl
+git commit -m "Test CI report binding failure"
+git push
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** the PR checks rerun. **Validate (ubuntu-latest)** or **Validate (windows-latest)** fails inside the validate job because `Test-ReportBindings.ps1` finds report fields that still point at `Store[Region]`.
+
+<Checkpoint lab="12" step="8" />
+
+### Step 9. Fix the break and merge
+
+Restore the column name, push the fix, and wait for checks to turn green again.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git revert --no-edit HEAD
+git push
+gh pr checks --watch
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git revert --no-edit HEAD
+git push
+gh pr checks --watch
+```
+
+</TabItem>
+</Tabs>
+
+When checks pass and you've read the review, merge the PR from GitHub.com with **Merge pull request**, or use:
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+gh pr merge --merge --delete-branch
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+gh pr merge --merge --delete-branch
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** the PR returns to green, the deliberate failure commit is neutralized by the fix commit, and the merged PR records CI plus Copilot review evidence.
+
+<Checkpoint lab="12" step="9" />
+
+### Step 10. Optional: enable automatic Copilot review
+
+<PlatformBadge kind="paid-plan" /> <PlatformBadge kind="optional" />
+
+If this is your own repo and your plan allows it, configure automatic reviews so future PRs don't need a manual request.
+
+1. On GitHub.com, open your repo.
+2. Select **Settings > Rules > Rulesets**.
+3. Create or edit a ruleset for pull requests into `main`.
+4. Add Copilot code review as an automatic review requirement if your UI exposes it.
+5. If the UI offers **Review new pushes**, enable it only if you want Copilot to re-review after each push.
+
+**You should see:** future pull requests to `main` request Copilot review automatically. If you don't see the option, your plan or organization policy may not allow it.
+
+<Checkpoint lab="12" step="10" />
+
+## Verify your work
+
+<VerifyStep lab="12" />
+
+## Troubleshooting
+
+<details>
+<summary>gh pr create opens against the upstream repo</summary>
+
+Check `git remote -v`. `origin` should be your copy. If `origin` points at `sabajamalian/fabric-powerbi-ai-devops-demo`, rename it to `upstream`, add your copy as `origin`, and push again. Lab 01 step 3 shows the intended remote setup.
+
+</details>
+
+<details>
+<summary>Dependency review is skipped or missing</summary>
+
+The `dependency-review` job runs only on pull requests. If you are looking at a push to `main` or a local workflow run, it won't run. The Lab 12 check only needs a PR with green checks and a Copilot review.
+
+</details>
+
+<details>
+<summary>Copilot is not shown under Reviewers</summary>
+
+Copilot code review needs a paid plan or organization access, and admins can disable it. Check your GitHub Copilot settings and repository policies. If you're in an organization, ask an owner whether Copilot code review is enabled.
+
+</details>
+
+<details>
+<summary>The deliberate break fails a different validation first</summary>
+
+If TMDL lint fails before report bindings, restore the file and make a smaller rename: only change the column object name from `Region` to `Sales Region`. Don't change `sourceColumn`, `lineageTag`, indentation, or DAX. Then push again.
+
+</details>
+
+<details>
+<summary>Copilot review comments look generic</summary>
+
+Check that the PR includes the instruction and skill files on the head branch. GitHub Docs say Copilot code review reads custom instructions, agent instructions, and skills from the PR head branch. Also make sure the PR description explains the model changes and includes the question comparison.
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="CI on this repo runs without any Fabric tenant. What does that mean the validate job can and can't prove?"
+	options={[
+		'It proves the model deploys to Fabric and refreshes.',
+		'It proves the TMDL parses, follows the conventions, and every report field binds, but not that a Copilot answer is correct.',
+		'It proves nothing until you add a service principal.',
+	]}
+	answer={1}
+	explanation="The validate job checks the files: lint, conventions, bindings, data, expected results, and customizations. Answer quality comes from the graded question runs in Labs 05 and 10, and deployment is phase two."
+/>
+
+<KnowledgeCheck
+	question="Why did the deliberate column rename fail CI?"
+	options={[
+		'Power BI Desktop was not open on the runner.',
+		'The report PBIR files still referenced the old field name.',
+		'Copilot code review always blocks renames.',
+	]}
+	answer={1}
+	explanation="Report visuals bind by table and field names. Renaming a model column without rebinding PBIR leaves stale report references."
+/>
+
+<KnowledgeCheck
+	question="What is the best way to use Copilot code review here?"
+	options={[
+		'Replace CI with Copilot review.',
+		'Request it after checks are running, read the comments, and compare with the local model-reviewer output.',
+		'Ask it to approve and merge automatically without reading the PR.',
+	]}
+	answer={1}
+	explanation="Copilot review is another reviewer. CI still proves the model and repo checks pass."
+/>
+
+## Recap and next
+
+You pushed the AI-ready branch, opened a PR, watched the real CI jobs, requested Copilot code review, compared it with the local model-reviewer prompt, and proved CI catches a broken report binding. The next lab moves the same style of scoped work to Copilot cloud agent.
+
+<NextLab current="12" />
+
+## Go further
+
+- Add a short note to the PR description that maps each Lab 09 AI prep file to the business question it helps.
+- Re-request Copilot review after the fix commit and compare whether it comments on the deliberate failure history.
+- Configure automatic Copilot review with a ruleset in your own copy, then open a tiny documentation PR to test it.
+
+<FeedbackLink />

@@ -1,0 +1,19 @@
+# Contexts where GUID-shaped or email-shaped strings are expected and safe.
+# Read by tools/python/pharmacy_demo/repo_checks.py (identifier guard).
+version: 1
+guid_line_contexts:
+  - "lineageTag:"
+  - "sourceLineageTag:"
+  - "\"logicalId\""
+  - "annotation PBI_"
+  - "database "
+emails:
+  - "noreply@github.com"
+  - "users.noreply.github.com"
+  - "example.com"
+  - "example.org"
+paths:
+  # Files skipped entirely by the identifier guard.
+  - "site/package-lock.json"
+  - "tools/python/requirements*.txt"
+  - "tools/python/uv.lock"

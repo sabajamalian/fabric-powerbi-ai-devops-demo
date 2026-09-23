@@ -1,0 +1,320 @@
+---
+title: "Lab 06: Skills and the read-only assessor"
+description: "Install the Fabric semantic-model-authoring skill, run the model-assessor agent, and produce out/assessment.md."
+sidebar:
+  label: "06. Skills and assessor"
+lab:
+  number: 6
+  durationMinutes: 35
+  level: intermediate
+  platforms: [windows, macos-file-mode]
+  requiresDesktop: false
+  surfaces: [vscode, cli]
+  primitives: [skill, custom-agent, prompt-file, handoff, apm, hook, mcp]
+  startCheckpoint: lab05-complete
+  endCheckpoint: lab06-complete
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import WhatVaries from '~/components/WhatVaries.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+Instructions are always on. Skills are loaded only when their description matches the task. That keeps the normal chat context smaller, while still giving agents deep guidance when they assess or change the model. In this lab the assessor loads the repo conventions, writes a structured assessment, and offers a handoff without making the fixes itself.
+
+## Concepts
+
+- **Skill:** a folder with `SKILL.md` and optional references. Copilot reads the description first, then loads the body and references when needed. See [Skills](/reference/skills/#pharmacy-model-conventions).
+- **APM:** Agent Package Manager. This repo uses it to install Microsoft's Skills for Fabric `semantic-model-authoring` skill into `.agents/skills/`.
+- **Read-only by instruction:** the assessor has an `edit` tool so it can write `out/assessment.md`, but its agent instructions restrict edits to that file.
+- **Deterministic convention check:** `scripts/Test-ModelConventions.ps1` reads `rules/*.yaml` and reports rule-coded findings. The agent explains and prioritizes those findings.
+- **Handoff:** the assessor shows **Fix these findings**, but you do not click it until [Lab 07](/labs/07-handoffs-names-descriptions/).
+
+## Before you begin
+
+- You finished [Lab 05](/labs/05-question-tester-before/) and `evaluation/runs/local-baseline.json` exists.
+- You have VS Code open at the repo root.
+- Power BI Desktop is optional here. The assessor can read TMDL files directly.
+- If you skipped Lab 05, restore the checkpoint below.
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Read the repo conventions skill
+
+Open the skill and the data dictionary:
+
+<RepoFile path=".github/skills/pharmacy-model-conventions/SKILL.md" lines="1-61" />
+
+<RepoFile path=".github/skills/pharmacy-model-conventions/references/data-dictionary.md" lines="1-21" />
+
+The skill description is what gets it loaded. The references provide the details only after the skill is active.
+
+**You should see:** rules C01 to C15, the command for the deterministic checker, and the standard business names: Date, Store, Medication, and Prescription Fill.
+
+<Checkpoint lab="06" step="1" />
+
+### Step 2. Install the Skills for Fabric semantic-model-authoring skill
+
+<PlatformBadge kind="optional" />
+
+The lab check for this step is optional, but installing the skill shows how a third-party package reaches Copilot without copying files into `.github/skills/`.
+
+<Tabs syncKey="fabric-skill-install">
+<TabItem label="APM">
+
+```powershell
+python -m pip install --user apm-cli==0.31.0
+apm --version
+apm install --only apm --target copilot
+```
+
+If the installer asks you to confirm the package plan, read it first. It should deploy only the APM skill dependency from this repo's `apm.yml`, then answer `y`.
+
+</TabItem>
+<TabItem label="Copilot CLI plugin">
+
+```text
+/plugin marketplace add microsoft/skills-for-fabric
+/plugin install powerbi-authoring@fabric-collection
+```
+
+Run those slash commands inside GitHub Copilot CLI. The Skills for Fabric README currently recommends the `powerbi-authoring` bundle for semantic models, Power BI reports, and PBIP workflows.
+
+</TabItem>
+</Tabs>
+
+The repo manifest pins the APM install:
+
+<RepoFile path="apm.yml" lines="1-26" />
+
+<RepoFile path="apm.lock.yaml" lines="1-24" />
+
+Then run the optional check:
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 06 -Only L06-fabric-skill
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 06 -Only L06-fabric-skill
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** either `PASS L06-fabric-skill` with a path such as `.agents/skills/semantic-model-authoring/SKILL.md`, or a warning if you skipped this optional install. `apm install --only apm --target copilot` should not overwrite `.vscode/mcp.json`.
+
+<Checkpoint lab="06" step="2" />
+
+### Step 3. Run the model-assessor prompt
+
+1. Open Copilot Chat: **Ctrl+Alt+I** (macOS: **Ctrl+Cmd+I**), or **View > Chat**.
+2. Switch to **Agent** mode.
+3. Pick **model-assessor** from the agent dropdown.
+4. Type `/assess-model` and press **Enter**. If VS Code asks for the optional `focus`, leave it blank.
+5. Approve terminal commands after you read them.
+
+The prompt is short because the agent file carries the method and output contract:
+
+<RepoFile path=".github/prompts/assess-model.prompt.md" />
+
+<RepoFile path=".github/agents/model-assessor.agent.md" lines="22-53" />
+
+**You should see:** the assessor runs `pwsh ./scripts/Test-ModelConventions.ps1 -Markdown`, reads the model through MCP or TMDL files, and writes `out/assessment.md`.
+
+<WhatVaries mustMatch={['The assessor loads pharmacy-model-conventions', 'The assessor writes out/assessment.md', 'The assessment table has Rule, Severity, Object, Finding, and Fix columns', 'The chat ends by suggesting the Fix these findings handoff']}>
+The number of findings and the wording can vary. The baseline should still produce many high-value findings.
+</WhatVaries>
+
+<Checkpoint lab="06" step="3" />
+
+### Step 4. Inspect the assessment file
+
+Open `out/assessment.md` in VS Code. The lab check looks for a Markdown table with at least eight findings and these columns: `Rule`, `Severity`, `Object`, `Finding`, and `Fix`.
+
+Run the check:
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 06 -Only L06-assessment
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 06 -Only L06-assessment
+```
+
+</TabItem>
+</Tabs>
+
+The deterministic rule set behind the assessment lives here:
+
+<RepoFile path="rules/required-model-objects.yaml" lines="1-39" />
+
+<RepoFile path="scripts/Test-ModelConventions.ps1" lines="1-35" />
+
+**You should see:** `PASS L06-assessment` and at least eight findings in `out/assessment.md`. The highest-severity items should include raw names, missing descriptions, relationship/date-table problems, and missing measures.
+
+<Checkpoint lab="06" step="4" />
+
+### Step 5. Ask the assessor to fix one finding
+
+In the same model-assessor chat, type:
+
+```text
+Fix the highest-severity finding now.
+```
+
+The correct behavior is refusal plus a handoff. The assessor has `edit`, but its instructions say the only file it creates or edits is `out/assessment.md`:
+
+<RepoFile path=".github/agents/model-assessor.agent.md" lines="1-20" />
+
+This is an instruction boundary, not a hard tool permission. Lab 11 adds hooks that make some rules deterministic by denying forbidden edits and logging post-edit lint.
+
+**You should see:** the assessor explains that it cannot edit TMDL or PBIR, summarizes what should be fixed, and points you to **Fix these findings** instead of changing the model.
+
+<Checkpoint lab="06" step="5" />
+
+### Step 6. Leave the handoff visible for Lab 07
+
+Do not click **Fix these findings** yet. You need the button visible because [Lab 07](/labs/07-handoffs-names-descriptions/) starts by clicking it.
+
+If you do not see the button:
+
+1. Keep the model-assessor chat open.
+2. Make sure the latest assessor response finished.
+3. If needed, open chat history from the clock icon at the top of the Chat view and select this conversation later.
+
+**You should see:** a completed model-assessor answer with the **Fix these findings** handoff button under it, plus `out/assessment.md` in the repo.
+
+<Checkpoint lab="06" step="6" />
+
+## Verify your work
+
+<VerifyStep lab="06" />
+
+## Troubleshooting
+
+<details>
+<summary>apm is not recognized after pip install</summary>
+
+`pip install --user` puts `apm` in your Python user Scripts folder, which often isn't on `PATH` (pip prints a warning naming the folder). Add it for this terminal session, then run `apm --version` again:
+
+```powershell
+$scripts = python -c "import sysconfig; print(sysconfig.get_path('scripts', sysconfig.get_preferred_scheme('user')))"
+$env:PATH = $scripts + [IO.Path]::PathSeparator + $env:PATH
+apm --version
+```
+
+To make it permanent on Windows, add that folder under **Settings > System > About > Advanced system settings > Environment Variables > Path** for your user, then open a new terminal.
+
+</details>
+
+<details>
+<summary>The semantic-model-authoring skill check fails</summary>
+
+This check is optional. If you want it to pass, rerun `apm install --only apm --target copilot` from the repo root and check for `.agents/skills/semantic-model-authoring/SKILL.md`. If APM installed globally, the check also looks under your home directory.
+
+</details>
+
+<details>
+<summary>APM changed .vscode/mcp.json</summary>
+
+You likely missed `--only apm`. Restore the workspace MCP config with `git restore .vscode/mcp.json`, then rerun `apm install --only apm --target copilot`. This repo manages MCP servers itself.
+
+</details>
+
+<details>
+<summary>The assessor writes fewer than eight findings</summary>
+
+Ask it to rerun `pwsh ./scripts/Test-ModelConventions.ps1 -Markdown` and rewrite `out/assessment.md` with one row per grouped finding. The check reads the table shape and count, not the chat answer.
+
+</details>
+
+<details>
+<summary>The skill does not appear to load</summary>
+
+Ask the agent, "Which skills did you use?" Then expand the chat references. If `pharmacy-model-conventions` is missing, restart the chat and ask specifically to assess names, descriptions, relationships, date table, and measures against the Contoso Pharmacy conventions.
+
+</details>
+
+<details>
+<summary>The assessor starts editing TMDL</summary>
+
+Reject the edit. Remind it: "You are model-assessor. Your only editable file is out/assessment.md." The restriction is in the agent instructions. Hook-enforced edit denials are covered in [Lab 11](/labs/11-copilot-cli-and-hooks/).
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="Why does the assessor load a skill instead of relying only on repo instructions?"
+	options={[
+		'Skills provide task-specific guidance and references only when the task needs them.',
+		'Skills are required because Copilot cannot read Markdown instructions.',
+		'Skills replace the need for validation scripts.',
+	]}
+	answer={0}
+	explanation="Repo instructions are always on. Skills load on demand and can bring deeper reference material into context for a specific task."
+/>
+
+<KnowledgeCheck
+	question="Why can model-assessor write out/assessment.md but not fix the model?"
+	options={[
+		'Its instructions restrict edits to out/assessment.md, even though the tool list includes edit.',
+		'VS Code blocks every edit from custom agents.',
+		'TMDL files are read-only in this repo.',
+	]}
+	answer={0}
+	explanation="The boundary is in the agent instructions. Hooks can enforce some rules, but this lab demonstrates the instruction boundary first."
+/>
+
+<KnowledgeCheck
+	question="What does the L06-assessment check require?"
+	options={[
+		'At least eight findings in out/assessment.md with rule, severity, object, finding, and fix fields.',
+		'A passing DAX test suite.',
+		'A committed change to the semantic model.',
+	]}
+	answer={0}
+	explanation="The check reads out/assessment.md and validates the findings table shape and count. It does not expect model changes yet."
+/>
+
+## Recap and next
+
+You read a repo skill, installed the third-party Skills for Fabric authoring skill, ran a read-only assessor, and produced `out/assessment.md`. You also saw the assessor offer a handoff without taking edit ownership of the model. Next you click that handoff and let the improver handle names, descriptions, and report bindings.
+
+<NextLab current="06" />
+
+## Go further
+
+- Run `pwsh ./scripts/Test-ModelConventions.ps1 -Json` and compare the machine-readable findings with the Markdown assessment.
+- Ask the assessor to focus only on measures, then compare the shorter assessment with the full one.
+- Read `.github/skills/pharmacy-model-conventions/references/ai-readiness-checklist.md` and mark which findings affect AI answers most.
+
+<FeedbackLink />

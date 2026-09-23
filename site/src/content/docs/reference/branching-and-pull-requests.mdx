@@ -1,0 +1,75 @@
+---
+title: "Branching and pull requests"
+description: "How learners use branches, checkpoints, pull requests, CODEOWNERS, Copilot review, rulesets, and checkpoint restore."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import RepoFile from '~/components/RepoFile.astro';
+
+## Branch model
+
+`main` holds the baseline lab state. Learners work in their own template copy on feature branches, not directly on `main`.
+
+The upstream reference branch is `reference/ai-ready`. Checkpoint tags and `lab/checkpoints.json` let you restart a lab step or compare against known states.
+
+<RepoFile path="lab/checkpoints.json" />
+
+## Pull request template
+
+The PR template asks for the lab scope, validation evidence, screenshots where needed, and review notes.
+
+<RepoFile path=".github/pull_request_template.md" />
+
+Keep pull requests scoped to one lab or one model improvement. A PR that mixes model edits, generated data, site pages, and workflow changes is harder for Copilot and humans to review.
+
+## CODEOWNERS
+
+<RepoFile path=".github/CODEOWNERS" />
+
+CODEOWNERS is a lightweight route to the right reviewers. Use it with branch protection or rulesets in organization repos.
+
+## Review paths
+
+| Review path | Use when |
+|---|---|
+| `model-reviewer` custom agent | You want repo-aware model and report review before opening or updating a PR. |
+| Copilot code review | You want GitHub PR review comments on changed files. |
+| Human reviewer | The change affects teaching flow, generated data, expected answers, or workflow permissions. |
+
+The model-reviewer agent is cataloged in [Agents](/reference/agents/).
+
+## Suggested rulesets
+
+For learner copies, use light protection:
+
+- Require pull requests into `main`.
+- Require CI to pass.
+- Block force pushes to `main`.
+- Require conversation resolution before merge.
+
+For a shared training repo, add:
+
+- CODEOWNERS review for workflows, scripts, and generated expected answers.
+- Secret scanning and push protection.
+- Signed or verified commits if your organization requires them.
+
+## Redo a lab from a checkpoint
+
+Start from a clean working tree. The restore script creates a new `lab/<checkpoint>-<timestamp>` branch and restores the checkpoint paths:
+
+```powershell
+pwsh ./scripts/lab/Restore-LabCheckpoint.ps1 -Checkpoint lab08-complete
+```
+
+Then run the lab checks listed in that checkpoint's `verify` field. `lab08-complete` verifies Labs 07 and 08:
+
+```powershell
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 07
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 08
+```
+
+Checkpoint names and verify lists are in `lab/checkpoints.json`. Tags use the same checkpoint source of truth.
+
+<Aside type="caution" title="Restore changes files">
+Restore on a disposable branch. It is meant for retrying labs, not preserving in-progress work.
+</Aside>

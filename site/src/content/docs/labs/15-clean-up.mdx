@@ -1,0 +1,288 @@
+---
+title: "Lab 15: Clean up and next steps"
+description: "Remove optional local links, review local outputs that remain, reset site progress, and decide what to keep from the lab."
+sidebar:
+  label: "15. Clean up"
+lab:
+  number: 15
+  durationMinutes: 10
+  level: intro
+  platforms: [windows, macos-file-mode]
+  requiresDesktop: false
+  surfaces: [vscode, desktop, github]
+  primitives: [hook, cli, apm]
+  startCheckpoint: lab09-complete
+  endCheckpoint: lab09-complete
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+The labs create local files, local tool installs, browser progress, branches, issues, and pull requests. They do not create Fabric workspaces, cloud resources, credentials, service principals, or secrets. Cleanup is mostly about deciding what to keep, because your repo copy and the agent customization files are useful after the lab.
+
+The safest cleanup is report-first. Run the lab check, read what remains, then delete only the local outputs you don't want.
+
+## Concepts
+
+- **Data junction:** on Windows, `C:\ContosoPharmacyDemo\data` points to this repo's `data\generated` folder so Power BI Desktop can refresh from a stable path.
+- **Local outputs:** ignored folders such as `out/`, `.tools/`, `apm_modules/`, and `evaluation/runs/local-*.json`. They are safe to inspect and delete manually.
+- **Template copy:** your GitHub repository created from the upstream template. Delete it only if you don't want the lab history.
+- **Progress state:** the lab site stores checkboxes in browser local storage. Reset it on the `/progress/` page.
+
+## Before you begin
+
+- Close Power BI Desktop. If Desktop is open, close it before removing the data junction.
+- Commit or discard any work you want to keep.
+- Decide whether your GitHub template copy is a keeper. It contains only synthetic data, but it may contain your lab branches and PRs.
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Close Desktop and inspect your repo
+
+<PlatformBadge kind="windows-only" />
+
+1. Save anything you want in Power BI Desktop, then close Desktop.
+2. In VS Code, open **Source Control**: **Ctrl+Shift+G**, or **View > Source Control**.
+3. Check the changed files list.
+4. In the terminal, run:
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git status --short
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git status --short
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** either a clean tree, or only files you recognize from the labs. Stop and commit or discard anything you care about before deleting local folders.
+
+<Checkpoint lab="15" step="1" />
+
+### Step 2. Remove the Windows data junction
+
+<PlatformBadge kind="windows-only" /> <PlatformBadge kind="optional" />
+
+If you ran the Desktop labs on Windows, remove the junction that points `C:\ContosoPharmacyDemo\data` at this repo. The script removes the junction itself and never deletes `data/generated/`.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/Set-LocalDataLink.ps1 -Remove
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/Set-LocalDataLink.ps1 -Remove
+```
+
+</TabItem>
+</Tabs>
+
+The script is Windows-only and exits without changes on macOS:
+
+<RepoFile path="scripts/Set-LocalDataLink.ps1" lines="32-53" />
+
+**You should see:** on Windows, `Removed C:\ContosoPharmacyDemo\data`, or a message that it doesn't exist. On macOS, you should see that there is nothing to do on this OS.
+
+<Checkpoint lab="15" step="2" />
+
+### Step 3. Report local outputs that remain
+
+Run the Lab 15 check. It reports local output folders and local run files, but deletes nothing.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 15
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 15
+```
+
+</TabItem>
+</Tabs>
+
+The check can list:
+
+- `out/`, including assessment, comparison, hook logs, and DAX test output.
+- `.tools/`, if you downloaded local helper packages such as ADOMD.NET.
+- `apm_modules/`, if APM resolved package content locally.
+- `evaluation/runs/local-*.json`, if you ran the question tests.
+
+**You should see:** a PASS if nothing is left, or a WARN-like optional failure listing local paths that remain. The check is informational. Delete those paths yourself only if you don't need them.
+
+<Aside type="caution" title="Don't delete by script unless you mean it">
+This lab intentionally does not provide a cleanup command for local outputs. Some files are useful evidence for your own model runs, PRs, or demos.
+</Aside>
+
+<Checkpoint lab="15" step="3" />
+
+### Step 4. Decide what optional tools to keep
+
+The workstation setup may have installed optional tools you use elsewhere. Remove only what you installed just for the lab and no longer need.
+
+| Tool | Keep if | Remove idea |
+|---|---|---|
+| GitHub Copilot CLI | You want terminal agent sessions. | Use the package manager you used to install it. |
+| APM CLI | You want repeatable agent packages. | On Windows, remove `Microsoft.APM` with winget if you installed it that way. On macOS, `brew uninstall apm` if you used Homebrew. |
+| VS Code extensions | You use PowerShell, Python, TMDL, or Power BI Modeling MCP elsewhere. | Open **Extensions**: **Ctrl+Shift+X** (macOS: **Cmd+Shift+X**), or **View > Extensions**, then uninstall only lab-specific extensions. |
+| Python `.venv` | You want to run validation later. | Delete `.venv` manually if you are done with local checks. |
+| Node packages under `site/node_modules` | You want to preview the site. | Delete `site/node_modules` manually if you need space. |
+
+**You should see:** no automatic changes. This is a decision step.
+
+<Checkpoint lab="15" step="4" />
+
+### Step 5. Reset browser progress
+
+The lab site stores progress in your browser, not in the repo.
+
+1. Open the lab site.
+2. Go to `/progress/`.
+3. Select **Reset progress**.
+4. Confirm the reset.
+
+**You should see:** all lab checkboxes clear in this browser. Your repository files and GitHub issues are unchanged.
+
+<Checkpoint lab="15" step="5" />
+
+### Step 6. Optionally delete your GitHub template copy
+
+<PlatformBadge kind="optional" />
+
+If you don't need your lab repository anymore, delete it from GitHub. This is permanent for that repo copy.
+
+1. Open your repository on GitHub.com.
+2. Go to **Settings > General**.
+3. Scroll to **Danger Zone**.
+4. Select **Delete this repository** and follow GitHub's confirmation prompts.
+
+Nothing in this lab created cloud resources, credentials, service principals, Fabric workspaces, or tenant settings. There is nothing to revoke for the lab itself. If you added your own secrets or integrations while experimenting, remove those separately in **Settings > Secrets and variables** and in the external system.
+
+**You should see:** either your repo remains because you kept it, or GitHub confirms it was deleted.
+
+<Checkpoint lab="15" step="6" />
+
+### Step 7. Read the roadmap
+
+Open [Roadmap](/roadmap/) and decide what phase two work matters to you. The roadmap separates what this lab covers from what belongs in a real BI program, such as Fabric workspaces, deployment, governance, monitoring, and product-specific Copilot experiences.
+
+**You should see:** a clear list of items that are not in this lab and a shortlist of lab-site improvements.
+
+<Checkpoint lab="15" step="7" />
+
+## Verify your work
+
+<VerifyStep lab="15" />
+
+## Troubleshooting
+
+<details>
+<summary>Set-LocalDataLink.ps1 says the path is a real folder</summary>
+
+The script refuses to delete real data. Open `C:\ContosoPharmacyDemo\data`, move or delete the files yourself if you own them, then rerun the script. If you're not sure, leave the folder alone.
+
+</details>
+
+<details>
+<summary>The Lab 15 check reports out/ or local runs</summary>
+
+That's expected. The check reports local outputs and deletes nothing. Keep them if you want evidence from the labs, or delete them manually when you're done.
+
+</details>
+
+<details>
+<summary>I deleted the GitHub repo but still have a local clone</summary>
+
+The local clone remains on disk. Delete the local folder manually only after you have saved anything you want. If you keep the clone, remove or change the `origin` remote because it points to a deleted repo.
+
+</details>
+
+<details>
+<summary>I want to start the labs over</summary>
+
+Create a fresh branch and restore a checkpoint, for example `pwsh ./scripts/lab/Restore-LabCheckpoint.ps1 -Checkpoint lab02-start`. The restore script needs the `upstream` remote from [Lab 01 step 3](/labs/01-get-your-copy/#step-3).
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="What does Set-LocalDataLink.ps1 -Remove delete?"
+	options={[
+		'The junction at C:\\ContosoPharmacyDemo\\data, not the repo data files.',
+		'All generated CSV files in data/generated.',
+		'The Power BI report and semantic model.',
+	]}
+	answer={0}
+	explanation="The script removes the Windows junction and its empty parent folder when possible. It does not delete data/generated."
+/>
+
+<KnowledgeCheck
+	question="What cloud resources does this lab create?"
+	options={[
+		'A Fabric workspace and service principal.',
+		'None. The lab uses local files and GitHub repo features.',
+		'An Azure OpenAI resource for every learner.',
+	]}
+	answer={1}
+	explanation="The lab does not create Fabric workspaces, credentials, service principals, or Azure resources."
+/>
+
+<KnowledgeCheck
+	question="Why does Lab 15 report local outputs instead of deleting them?"
+	options={[
+		'Some outputs are useful evidence, so you choose what to keep.',
+		'The script cannot see ignored files.',
+		'GitHub requires ignored files to stay forever.',
+	]}
+	answer={0}
+	explanation="Files under out, local runs, and tool caches can help with demos or later review. The lab leaves deletion to you."
+/>
+
+## Recap and next
+
+You removed the optional Windows data junction, reviewed local outputs, decided what optional tools and repo copies to keep, and reset site progress if you wanted a fresh browser state. The lab did not create cloud infrastructure or credentials, so cleanup stays local and GitHub-focused.
+
+<NextLab current="15" />
+
+## Go further
+
+- Keep your repo and turn the `measure-documenter` files from [Lab 14](/labs/14-build-your-own/) into a real PR for your team.
+- Read [Security and synthetic data](/help/security-and-synthetic-data/) before adapting the repo for any non-synthetic data.
+- Read [Known limitations](/help/known-limitations/) before using these patterns in a workshop.
+
+<FeedbackLink />

@@ -1,0 +1,392 @@
+---
+title: "Lab 01: Get your copy and explore the repo"
+description: Create your own template copy, clone it, initialize the dev environment, and validate the repo.
+sidebar:
+  label: "01. Get your copy"
+lab:
+  number: 1
+  durationMinutes: 30
+  level: intro
+  platforms: [windows, macos]
+  requiresDesktop: false
+  surfaces: [github, vscode, cli]
+  primitives: [repo-setup, validation, synthetic-data]
+  startCheckpoint: none
+  endCheckpoint: none
+---
+
+import { Aside, Tabs, TabItem, FileTree } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+You need your own repository, because later labs create branches, commits, pull requests, custom instructions, and local run files. The upstream repo is the template and checkpoint source. Your copy is the workspace where you can experiment safely. By the end of this lab, the local validation passes even though the semantic model is still intentionally weak.
+
+## Concepts
+
+- **Template copy:** a new GitHub repo created from the upstream lab repo. Lab checks fail if `origin` still points at the upstream repo.
+- **Upstream remote:** a read-only remote named `upstream`, used by checkpoint restore. See [Scripts](/reference/scripts/).
+- **Synthetic data:** deterministic CSV files committed to the repo. See [Synthetic data model](/reference/synthetic-data-model/).
+- **Validation:** local checks for data, expected answers, TMDL, PBIR bindings, customizations, and hygiene.
+- **Recommended extensions:** VS Code prompts you to install the repo's extensions from `.vscode/extensions.json`.
+
+## Before you begin
+
+- Finish [Lab 00](/labs/00-workstation-setup/) or have equivalent tools installed.
+- Sign in to GitHub in your browser.
+- Use a short local path on Windows, for example `C:\src\contoso-pharmacy-lab`. Spaces work, but short paths make tooling errors easier to read.
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Create your own repository from the template
+
+1. Open the upstream repo in your browser: `https://github.com/sabajamalian/fabric-powerbi-ai-devops-demo`.
+2. Select **Use this template > Create a new repository**.
+3. Pick your GitHub user or organization as **Owner**.
+4. Name it `contoso-pharmacy-lab` or another short name.
+5. Choose public or private visibility.
+6. Leave **Include all branches** off.
+7. Select **Create repository**.
+
+**You should see:** a new repo under your account. Its file list looks like the upstream repo, but the URL starts with `https://github.com/<your-github-user>/`.
+
+<Checkpoint lab="01" step="1" />
+
+### Step 2. Clone your copy to a short path
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+mkdir C:\src -Force
+git clone https://github.com/<your-github-user>/contoso-pharmacy-lab.git C:\src\contoso-pharmacy-lab
+cd C:\src\contoso-pharmacy-lab
+git remote -v
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+mkdir -p ~/src
+git clone https://github.com/<your-github-user>/contoso-pharmacy-lab.git ~/src/contoso-pharmacy-lab
+cd ~/src/contoso-pharmacy-lab
+git remote -v
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** `origin` points at your copy, not `sabajamalian/fabric-powerbi-ai-devops-demo`.
+
+<Checkpoint lab="01" step="2" />
+
+### Step 3. Add the upstream remote
+
+The checkpoint scripts fetch known-good lab states from upstream. They need a remote named exactly `upstream`.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git remote add upstream https://github.com/sabajamalian/fabric-powerbi-ai-devops-demo.git
+git remote -v
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git remote add upstream https://github.com/sabajamalian/fabric-powerbi-ai-devops-demo.git
+git remote -v
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** two remotes. `origin` is your copy. `upstream` is `https://github.com/sabajamalian/fabric-powerbi-ai-devops-demo.git`.
+
+<Checkpoint lab="01" step="3" />
+
+### Step 4. Initialize the development environment
+
+First run the prerequisite check from the repo root. It installs nothing.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/Test-Prerequisites.ps1
+pwsh ./scripts/Initialize-DevEnvironment.ps1
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/Test-Prerequisites.ps1
+pwsh ./scripts/Initialize-DevEnvironment.ps1
+```
+
+</TabItem>
+</Tabs>
+
+The initialization script finds Python 3.12, creates `.venv`, installs pinned hashed packages, installs the `pharmacy_demo` tools in editable mode, and runs validation.
+
+<RepoFile path="scripts/Initialize-DevEnvironment.ps1" lines="35-64" />
+
+**You should see:** `Installed pharmacy_demo and its pinned dependencies.`, then validation output. If validation fails, fix the first required prerequisite before moving on.
+
+<Checkpoint lab="01" step="4" />
+
+### Step 5. Check the synthetic data
+
+The committed CSVs are generated from a fixed seed. This check proves nothing drifted during clone or setup.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/New-SyntheticData.ps1 -Check
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/New-SyntheticData.ps1 -Check
+```
+
+</TabItem>
+</Tabs>
+
+<RepoFile path="data/README.md" lines="1-18" />
+
+**You should see:** output that says the generated data matches the seed, or no findings and exit code 0.
+
+<Checkpoint lab="01" step="5" />
+
+### Step 6. Run repository validation
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/Invoke-Validation.ps1
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/Invoke-Validation.ps1
+```
+
+</TabItem>
+</Tabs>
+
+Validation checks that the repo is mechanically correct. It does not say the model is AI-ready.
+
+<RepoFile path="scripts/Invoke-Validation.ps1" lines="2-16" />
+
+**You should see:** PASS lines for data, expected answers, questions, runs, TMDL, bindings, customizations, and hygiene.
+
+<Checkpoint lab="01" step="6" />
+
+### Step 7. Open the repo in VS Code and install recommended extensions
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+code .
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+code .
+```
+
+</TabItem>
+</Tabs>
+
+1. If VS Code asks whether you trust the authors, select **Yes, I trust the authors**.
+2. If VS Code offers recommended extensions, select **Install**.
+3. If the prompt doesn't appear, open **Extensions** with **Ctrl+Shift+X** (macOS: **Cmd+Shift+X**), or **View > Extensions**.
+4. In the Extensions view, select **Filter > Recommended**.
+5. Install the workspace recommendations.
+
+<RepoFile path=".vscode/extensions.json" />
+
+**You should see:** Copilot Chat, TMDL, Power BI Modeling MCP, PowerShell, Python, Ruff, YAML, and Astro extensions listed as installed or already available.
+
+<Checkpoint lab="01" step="7" />
+
+### Step 8. Take the repo tour
+
+Open **Explorer** with **Ctrl+Shift+E** (macOS: **Cmd+Shift+E**), or **View > Explorer**. Expand the main folders.
+
+<FileTree>
+
+- fabric/
+  - ContosoPharmacy.pbip
+  - ContosoPharmacy.SemanticModel/definition/
+  - ContosoPharmacy.Report/definition/
+- data/
+  - generated/
+  - schema/
+- evaluation/
+  - expected/
+  - runs/
+- .github/
+  - agents/
+  - instructions/
+  - prompts/
+  - skills/
+  - hooks/
+  - workflows/
+- .vscode/
+- scripts/
+- lab/
+- tools/python/pharmacy_demo/
+
+</FileTree>
+
+The always-on repo instructions describe the same map for agents:
+
+<RepoFile path=".github/copilot-instructions.md" lines="9-24" />
+
+**You should see:** the Power BI project under `fabric/`, Copilot customizations under `.github/`, validation contracts under `lab/`, and Python tooling under `tools/python/pharmacy_demo/`.
+
+<Checkpoint lab="01" step="8" />
+
+### Step 9. Commit nothing and check status
+
+You should not have created source changes yet. Local outputs such as `.venv` are ignored.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git status --short
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git status --short
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** no tracked file changes. If you installed VS Code extensions or created `.venv`, those should not appear in `git status`.
+
+<Checkpoint lab="01" step="9" />
+
+## Verify your work
+
+Run the Lab 01 check from the repo root. Then run the Lab 00 check if you want the full workstation report.
+
+<VerifyStep lab="01" />
+
+## Troubleshooting
+
+<details>
+<summary>The template button is missing</summary>
+
+Make sure you're on the upstream repo page, not a file view or a fork page. If GitHub changes the button label, use the green **Code** button menu and look for template creation from there.
+
+</details>
+
+<details>
+<summary>The clone fails with a long path error on Windows</summary>
+
+Run `git config --global core.longpaths true`, open a new PowerShell 7 terminal, and clone to a shorter folder such as `C:\src\contoso-pharmacy-lab`.
+
+</details>
+
+<details>
+<summary>PowerShell blocks a script</summary>
+
+Open PowerShell 7 and run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`. If your device policy blocks that, run the script with `pwsh -ExecutionPolicy Bypass -File ./scripts/Initialize-DevEnvironment.ps1`.
+
+</details>
+
+<details>
+<summary>Python packages fail behind a proxy</summary>
+
+Use your company's approved proxy settings for pip. The script uses pinned hashes, so don't remove `--require-hashes` or install unpinned packages to work around the proxy.
+
+</details>
+
+<details>
+<summary>Validation passes, but the model still looks bad</summary>
+
+That's expected. Validation checks whether the repo is internally consistent. The baseline model is intentionally weak, and the later labs improve its AI readiness.
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="Why do you create your own repo instead of working in the upstream template?"
+	options={[
+		'Because the lab checks require origin to be your copy, and later labs need your branches and pull requests.',
+		'Because the upstream repo cannot be cloned.',
+		'Because Power BI Desktop only opens private repos.',
+	]}
+	answer={0}
+	explanation="Your copy is where you make commits and PRs. The upstream remote stays read-only and supplies checkpoints."
+/>
+
+<KnowledgeCheck
+	question="What does Invoke-Validation.ps1 prove at this point?"
+	options={[
+		'The model already answers all business questions correctly.',
+		'The repo parses, generated data matches, expected answers are current, TMDL lints, report bindings resolve, and hygiene checks pass.',
+		'Power BI Desktop is open and refreshed.',
+	]}
+	answer={1}
+	explanation="Validation is a mechanical repo check. AI readiness comes later."
+/>
+
+<KnowledgeCheck
+	question="Why are synthetic CSV files committed to the repo?"
+	options={[
+		'So every learner and CI run uses the same deterministic data with no Fabric tenant.',
+		'Because the files contain real production data that must not change.',
+		'Because Power BI Desktop cannot read generated files.',
+	]}
+	answer={0}
+	explanation="The data is synthetic and deterministic, so the lab can run offline and the grader can compare exact expected answers."
+/>
+
+## Recap and next
+
+You created your own template copy, added the upstream remote, initialized `.venv`, confirmed the synthetic data, ran validation, installed recommended VS Code extensions, and checked that the working tree is clean. Next you open the PBIP and inspect the baseline model.
+
+<NextLab current="01" />
+
+## Go further
+
+- Run `pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 00` now that the repo exists.
+- Open [Scripts](/reference/scripts/) and compare the generated reference with the comment-based help in the PowerShell files.
+
+<FeedbackLink />

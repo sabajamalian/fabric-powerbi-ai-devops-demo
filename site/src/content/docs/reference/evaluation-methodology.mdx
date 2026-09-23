@@ -1,0 +1,87 @@
+---
+title: "Evaluation methodology"
+description: "How the lab defines business questions, computes expected answers, scores runs, and compares baseline and AI-ready models."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import RepoFile from '~/components/RepoFile.astro';
+
+## The evaluation story
+
+The lab measures whether Copilot can answer five business questions from the semantic model before and after model improvements. The expected answers come from a DuckDB oracle over CSV data, not from the Power BI model.
+
+The presenter-facing before and after results are linked from [Expected results](/present/expected-results/).
+
+## Questions file
+
+`evaluation/questions.yaml` defines IDs, prompts, expected response shape, tolerances, and grading hints.
+
+<RepoFile path="evaluation/questions.yaml" lines="1-120" />
+
+The five IDs are `Q01` to `Q05`. They cover trend, store comparison, refill rate, class increase, and exact-value style checks.
+
+## Expected results
+
+The oracle reads the generated CSV files with DuckDB and writes `evaluation/expected/Q01.json` to `Q05.json`.
+
+<RepoFile path="tools/python/pharmacy_demo/oracle.py" lines="1-80" />
+
+This separation matters. If the model is wrong, the expected answers do not move with it.
+
+## Run schema
+
+Every agent run must match `evaluation/run.schema.json`. A run has a label, model state, timestamp, and an `answers` object keyed by question ID.
+
+<RepoFile path="evaluation/run.schema.json" />
+
+## Rubric
+
+The rubric scores each question from 0 to 2:
+
+| Score | Meaning |
+|---:|---|
+| 0 | Wrong, missing, or contradicted by the data. |
+| 1 | Partially right, for example right direction with wrong magnitude. |
+| 2 | Correct answer with the required entities, numbers, and explanation. |
+
+<RepoFile path="evaluation/rubric.md" />
+
+The maximum run score is 10. The grader normalizes column names, keys, rates, percentages, and tolerances before scoring.
+
+<RepoFile path="tools/python/pharmacy_demo/evaluation.py" lines="1-120" />
+
+## Before and after comparison
+
+Learners usually create at least two runs:
+
+1. Baseline model run before improvements.
+2. AI-ready model run after names, descriptions, relationships, measures, report bindings, DAX tests, and AI prep drafts.
+
+The comparison is meaningful because the data and expected answers stay fixed.
+
+## Variance
+
+Natural-language agent answers can vary. The lab controls variance by:
+
+- Keeping the dataset deterministic.
+- Keeping questions fixed.
+- Using JSON run files.
+- Scoring against a deterministic oracle.
+- Asking for exact supporting values where needed.
+- Running deterministic DAX tests after model measures exist.
+
+## Deterministic DAX tests
+
+`Invoke-DaxQuestionTests.ps1` checks important DAX answers through Power BI Desktop after Lab 08. These tests do not replace the natural-language evaluation. They prove the semantic model can compute the expected values.
+
+<RepoFile path="scripts/Invoke-DaxQuestionTests.ps1" lines="1-80" />
+
+## How answer leakage is prevented
+
+The `question-tester` should not read the expected answers. The hook blocks reads of `evaluation/expected/` and `evaluation/questions.yaml` for non-maintainer sessions, and it blocks maintainer-only generator files.
+
+<RepoFile path="tools/python/pharmacy_demo/hooks.py" lines="50-63" />
+
+<Aside type="tip" title="What to compare">
+Compare total score, per-question score, and the explanation. A higher score with a weak explanation can still expose a model gap.
+</Aside>

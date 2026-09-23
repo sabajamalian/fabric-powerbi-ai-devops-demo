@@ -1,0 +1,95 @@
+table dim_date
+
+	column cal_dt
+		dataType: dateTime
+		formatString: Long Date
+		summarizeBy: none
+		sourceColumn: cal_dt
+
+		annotation SummarizationSetBy = User
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column yr
+		dataType: int64
+		formatString: 0
+		summarizeBy: sum
+		sourceColumn: yr
+
+		annotation SummarizationSetBy = User
+
+	column qtr
+		dataType: string
+		summarizeBy: none
+		sourceColumn: qtr
+
+		annotation SummarizationSetBy = User
+
+	column yr_qtr
+		dataType: string
+		summarizeBy: none
+		sourceColumn: yr_qtr
+
+		annotation SummarizationSetBy = User
+
+	column mth_num
+		dataType: int64
+		formatString: 0
+		summarizeBy: sum
+		sourceColumn: mth_num
+
+		annotation SummarizationSetBy = User
+
+	column mth_nm
+		dataType: string
+		summarizeBy: none
+		sourceColumn: mth_nm
+
+		annotation SummarizationSetBy = User
+
+	column yr_mth
+		dataType: string
+		summarizeBy: none
+		sourceColumn: yr_mth
+
+		annotation SummarizationSetBy = User
+
+	column yr_mth_num
+		dataType: int64
+		formatString: 0
+		summarizeBy: sum
+		sourceColumn: yr_mth_num
+
+		annotation SummarizationSetBy = User
+
+	column dow_num
+		dataType: int64
+		formatString: 0
+		summarizeBy: sum
+		sourceColumn: dow_num
+
+		annotation SummarizationSetBy = User
+
+	column dow_nm
+		dataType: string
+		summarizeBy: none
+		sourceColumn: dow_nm
+
+		annotation SummarizationSetBy = User
+
+	column is_wkend
+		dataType: string
+		summarizeBy: none
+		sourceColumn: is_wkend
+
+		annotation SummarizationSetBy = User
+
+	partition dim_date = m
+		mode: import
+		source =
+			let
+			    Source = Csv.Document(File.Contents(DataFolderPath & "dim_date.csv"), [Delimiter = ",", Columns = 11, Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+			    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+			    ChangedType = Table.TransformColumnTypes(PromotedHeaders, {{"cal_dt", type date}, {"yr", Int64.Type}, {"qtr", type text}, {"yr_qtr", type text}, {"mth_num", Int64.Type}, {"mth_nm", type text}, {"yr_mth", type text}, {"yr_mth_num", Int64.Type}, {"dow_num", Int64.Type}, {"dow_nm", type text}, {"is_wkend", type text}}, "en-US")
+			in
+			    ChangedType

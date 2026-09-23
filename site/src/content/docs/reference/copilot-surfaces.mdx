@@ -1,0 +1,53 @@
+---
+title: "Copilot surfaces"
+description: "A September 2026 matrix of which Copilot surfaces read each customization primitive used by the lab."
+---
+
+## Date and legend
+
+This matrix is dated **September 2026**. It combines current VS Code docs and GitHub Copilot docs. If a cell says **check the docs**, I could not confirm it without guessing.
+
+| Mark | Meaning |
+|---|---|
+| Yes | Public docs confirm support. |
+| No | Public docs do not list support, or list another location. |
+| Partial | Public docs confirm a narrower behavior. |
+| Check the docs | Verify the current docs and UI before relying on it. |
+
+## Matrix
+
+| Primitive | VS Code agent mode | Copilot CLI | Copilot cloud agent | Copilot code review | github.com chat |
+|---|---|---|---|---|---|
+| `.github/copilot-instructions.md` | Yes | Yes | Yes | Yes | Yes, when repo context is attached |
+| `.github/instructions/**/*.instructions.md` | Yes | Yes | Yes | Yes on GitHub.com code review. VS Code code review docs list only repo-wide | No in the GitHub.com chat support table |
+| `AGENTS.md` | Yes when `chat.useAgentsMdFile` is enabled | Yes | Yes | Yes on GitHub.com code review. VS Code code review docs list only repo-wide | No in the GitHub.com chat support table |
+| `.github/skills/*/SKILL.md` | Yes | Yes | Yes for skills-compatible sessions | Partial. GitHub docs say PR review reads agent skills from the head branch | Check the docs |
+| `.github/agents/*.agent.md` | Yes | Yes | Yes | No, code review is not a custom agent picker | No for regular chat. Agents tab is separate |
+| `.github/prompts/*.prompt.md` | Partial. Local agent support; Agent Host does not load prompt files | Check the docs | Check the docs | No | Check the docs |
+| `.github/hooks/*.json` | Yes, preview | Yes | Check the docs. This repo includes a bash wrapper for Linux cloud execution | Check the docs | No |
+| `.vscode/mcp.json` | Yes | No. CLI uses `~/.copilot/mcp-config.json` by default | Partial. VS Code can forward eligible config to Agent Host, but GitHub cloud uses repository MCP settings | No for this file. GitHub code review uses repository MCP settings | No |
+| GitHub repository MCP settings | No | No | Yes | Yes, with read-only requirements for code review tools | Check the docs |
+
+## Surface notes
+
+### VS Code agent mode
+
+VS Code is the richest local surface. It reads workspace instructions, `AGENTS.md`, custom agents, skills, hooks, and `.vscode/mcp.json`. Prompt files still work for the Local agent, but the docs say Agent Host does not load them.
+
+Open **Chat: Open Customizations** from the Command Palette to inspect what VS Code found.
+
+### Copilot CLI
+
+Copilot CLI reads repository instructions, path instructions, `AGENTS.md`, repository custom agents, skills, hooks, and MCP config. The CLI MCP config location is `~/.copilot/mcp-config.json` by default.
+
+### Copilot cloud agent
+
+Cloud agent reads repository instructions, path instructions, `AGENTS.md`, and `.github/agents`. This repo prepares cloud sessions with `.github/workflows/copilot-setup-steps.yml`, which installs Python tools and the pinned Skills for Fabric skill.
+
+### Copilot code review
+
+GitHub docs confirm repository-wide instructions, path instructions, `AGENTS.md`, and agent skills for pull request review on GitHub.com. Docs also say review reads these from the head branch.
+
+### github.com chat
+
+Regular github.com chat supports repository-wide instructions when the repo is attached as context. The current support table does not list path instructions, `AGENTS.md`, skills, agents, prompts, hooks, or `.vscode/mcp.json` for regular chat.

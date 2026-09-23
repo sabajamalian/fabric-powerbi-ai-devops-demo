@@ -1,0 +1,13 @@
+store_key,store_cd,store_nm,city,rgn,store_typ,open_dt
+1,S001,Lakeview,Lakeview,North,Standard,2015-03-02
+2,S002,Pine Hollow,Pine Hollow,North,Drive-thru,2017-06-12
+3,S003,Riverbend,Riverbend,North,24-hour,2012-09-24
+4,S004,Stonebridge,Stonebridge,South,Standard,2016-01-18
+5,S005,Harbor Point,Harbor Point,South,Drive-thru,2019-04-08
+6,S006,Magnolia Square,Magnolia Square,South,Standard,2014-11-03
+7,S007,Oak Terrace,Oak Terrace,East,24-hour,2011-05-16
+8,S008,Sunset Mesa,Sunset Mesa,West,Standard,2018-08-27
+9,S009,Willow Creek,Willow Creek,East,Standard,2020-02-10
+10,S010,Granite Park,Granite Park,East,Drive-thru,2013-10-07
+11,S011,Bayside,Bayside,West,24-hour,2016-07-25
+12,S012,Fox Run,Fox Run,West,Standard,2021-03-15

@@ -1,0 +1,68 @@
+---
+title: "APM and plugins"
+description: "How APM pins third-party skills, how the cloud setup installs Skills for Fabric, and when to use APM or Copilot CLI plugins."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import RepoFile from '~/components/RepoFile.astro';
+
+## What APM is
+
+APM is the open source Agent Package Manager at `github.com/microsoft/apm`. It installs agent assets such as skills from Git repositories into Copilot-compatible locations and records an `apm.lock.yaml` lockfile.
+
+This repo uses APM for one thing: pinning the third-party Skills for Fabric semantic model authoring skill.
+
+<RepoFile path="apm.yml" />
+<RepoFile path="apm.lock.yaml" />
+
+## What gets installed
+
+The package entry installs `semantic-model-authoring` from `microsoft/skills-for-fabric` `v0.3.17`. The lockfile records the resolved commit and tested APM version `0.31.0`.
+
+The command used by automation is:
+
+```bash
+apm install --only apm --target copilot
+```
+
+In this repo, that installs the external skill under `.agents/skills`, which is gitignored. The repo still keeps its own lab skills under `.github/skills` because those are the files learners edit and review.
+
+<RepoFile path=".github/workflows/copilot-setup-steps.yml" />
+
+## Why this repo does not export its own skills through APM
+
+APM treats `.github` as build output for Copilot assets. That is useful for packaged dependencies. It is not useful for the lab's teaching files, where the point is to see and edit `.github/skills`, `.github/agents`, `.github/prompts`, and `.github/instructions` directly.
+
+Recommendation: keep team-owned skills in `.github/skills` until you need to share them across many repositories. Use APM to pin third-party skills and shared skill packages.
+
+## Installing one skill from another repo
+
+If another repo publishes skills by subdirectory, install only the needed package or path rather than copying the whole repository. Pin a tag or commit. Review the generated `.github` output before you accept it.
+
+A team pattern looks like this:
+
+```yaml
+version: 1
+packages:
+  - name: semantic-model-authoring
+    source: github:microsoft/skills-for-fabric
+    version: v0.3.17
+```
+
+## Copilot CLI plugin alternative
+
+Skills for Fabric also supports a Copilot CLI plugin flow. That path can be useful for individual command-line workflows. For this lab, APM is better because the install is reproducible in the cloud setup workflow and the lockfile records the exact source.
+
+## Evaluation for a team
+
+| Factor | APM helps when | APM adds cost when |
+|---|---|---|
+| Reuse | Many repos need the same external skill. | One repo owns the skill and changes it often. |
+| Pinning | You need exact tags or commits. | You are prototyping and want simple file edits. |
+| Review | You want dependency diffs and lockfile updates. | Reviewers do not know the generated output. |
+| Maturity | You can tolerate `0.x` package-manager behavior. | You need long-term stable interfaces now. |
+| Onboarding | Cloud agents need the same third-party assets. | Developers never use cloud agents. |
+
+<Aside type="tip" title="Recommendation">
+Use APM to pin third-party skills. Keep your own team skills in `.github/skills` until they need to be shared across many repositories.
+</Aside>

@@ -1,0 +1,33 @@
+---
+import { contract, tracks } from '../lib/repo';
+import { url } from '../lib/url';
+---
+
+<div class="track-picker not-content">
+	{
+		Object.entries(tracks).map(([key, track]) => (
+			<label class="track-option">
+				<input type="radio" name="cpdemo-track" value={key} />
+				<span class="track-name">{track.label}</span>
+				<span class="track-labs">
+					Labs {track.labs.join(', ')}. Start with{' '}
+					<a href={url(contract.labs[track.labs[0]].slug)}>{contract.labs[track.labs[0]].title}</a>.
+				</span>
+			</label>
+		))
+	}
+	<p class="track-status" aria-live="polite"></p>
+</div>
+
+<script>
+	import { TRACK_KEY, get, set } from '../lib/progress';
+	const status = document.querySelector<HTMLParagraphElement>('.track-status');
+	const current = get(TRACK_KEY) ?? 'full';
+	for (const input of document.querySelectorAll<HTMLInputElement>('input[name="cpdemo-track"]')) {
+		input.checked = input.value === current;
+		input.addEventListener('change', () => {
+			set(TRACK_KEY, input.value);
+			if (status) status.textContent = 'Saved in this browser. The "Next" links on each lab now follow this track.';
+		});
+	}
+</script>

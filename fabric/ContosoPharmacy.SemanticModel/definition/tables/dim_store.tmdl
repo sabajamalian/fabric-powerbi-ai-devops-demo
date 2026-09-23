@@ -1,0 +1,64 @@
+table dim_store
+
+	column store_key
+		dataType: int64
+		formatString: 0
+		summarizeBy: sum
+		sourceColumn: store_key
+
+		annotation SummarizationSetBy = User
+
+	column store_cd
+		dataType: string
+		summarizeBy: none
+		sourceColumn: store_cd
+
+		annotation SummarizationSetBy = User
+
+	column store_nm
+		dataType: string
+		summarizeBy: none
+		sourceColumn: store_nm
+
+		annotation SummarizationSetBy = User
+
+	column city
+		dataType: string
+		summarizeBy: none
+		sourceColumn: city
+
+		annotation SummarizationSetBy = User
+
+	column rgn
+		dataType: string
+		summarizeBy: none
+		sourceColumn: rgn
+
+		annotation SummarizationSetBy = User
+
+	column store_typ
+		dataType: string
+		summarizeBy: none
+		sourceColumn: store_typ
+
+		annotation SummarizationSetBy = User
+
+	column open_dt
+		dataType: dateTime
+		formatString: Long Date
+		summarizeBy: none
+		sourceColumn: open_dt
+
+		annotation SummarizationSetBy = User
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	partition dim_store = m
+		mode: import
+		source =
+			let
+			    Source = Csv.Document(File.Contents(DataFolderPath & "dim_store.csv"), [Delimiter = ",", Columns = 7, Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+			    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+			    ChangedType = Table.TransformColumnTypes(PromotedHeaders, {{"store_key", Int64.Type}, {"store_cd", type text}, {"store_nm", type text}, {"city", type text}, {"rgn", type text}, {"store_typ", type text}, {"open_dt", type date}}, "en-US")
+			in
+			    ChangedType

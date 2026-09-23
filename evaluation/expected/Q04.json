@@ -1,0 +1,23 @@
+{
+  "question_id": "Q04",
+  "question": "Which stores had unusually high refill activity?",
+  "generated_by": "pharmacy_demo.oracle (DuckDB over data/generated/*.csv)",
+  "columns": [
+    "store",
+    "refill_rate",
+    "refill_rate_index"
+  ],
+  "rows": [
+    {
+      "store": "Riverbend",
+      "refill_rate": 0.795737,
+      "refill_rate_index": 1.368062
+    },
+    {
+      "store": "Granite Park",
+      "refill_rate": 0.781633,
+      "refill_rate_index": 1.343813
+    }
+  ],
+  "data_fingerprint": "658460be187cd13729aa2161c1ecaa1a2590538eb83a93f18ca1a1c3c65efcee"
+}

@@ -1,0 +1,109 @@
+---
+title: "60-minute demo"
+description: "A full presenter script that adds DAX tests, cloud agent setup, and a five-minute build-your-own extension."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Goal
+
+Run the same story as the 30-minute demo, then add deterministic DAX tests, the Copilot cloud agent workflow, and a short build-your-own customization exercise.
+
+## Have pre-run
+
+- Everything from the [30-minute demo](/present/30-minute-demo/).
+- Power BI Desktop open with the AI-ready checkpoint for Lab 08.
+- A completed `Invoke-DaxQuestionTests.ps1` output.
+- A cloud-agent issue and branch ready to show.
+- A small Lab 14 customization idea prepared, such as a new prompt or skill reference.
+
+## Timing table
+
+| Time | Segment | Show | Transition sentence |
+|---:|---|---|---|
+| 0:00 to 4:00 | Setup | Repo map, baseline, customizations | "The repo is the product: model code, agent instructions, guardrails, checks, and docs live together." |
+| 4:00 to 10:00 | Lab 05 before run | Baseline question-tester | "First we measure the assistant on business questions before we improve the model." |
+| 10:00 to 16:00 | Lab 06 assessor | Assessment and skill loading | "Skills give the agent domain knowledge without stuffing every rule into the main prompt." |
+| 16:00 to 25:00 | Lab 07 handoff | Improve names, descriptions, relationships | "Handoffs let the assessing agent pass focused work to the improving agent." |
+| 25:00 to 34:00 | Lab 08 DAX tests | Measures and deterministic tests | "Now we separate language quality from calculation correctness." |
+| 34:00 to 41:00 | Lab 10 comparison | Before and after results | "The same five questions become our regression test for AI readiness." |
+| 41:00 to 46:00 | Lab 11 hooks | Denial, ask, post-edit lint | "Hooks give us executable guardrails around agent behavior." |
+| 46:00 to 53:00 | Lab 12 PR | CI, reviewer, Copilot review | "The workflow ends where production changes should end: in a reviewed pull request." |
+| 53:00 to 57:00 | Lab 13 cloud agent | Cloud setup and issue | "When work is scoped and scripted, you can hand it to a cloud agent without losing control." |
+| 57:00 to 60:00 | Lab 14 in five minutes | Add one customization | "The same pattern works for your domain: write the rule, wire the agent, test the outcome." |
+
+## Segment notes
+
+### Setup
+
+Say: "There is no hidden service dependency for the lab. The dataset, oracle, grader, model files, site, and checks are all in this repo."
+
+### Lab 05 before run
+
+Show a baseline run and the JSON shape. Keep the focus on repeatability.
+
+Link: [Lab 05](/labs/05-question-tester-before/).
+
+### Lab 06 assessor
+
+Show the skill catalog and the `model-assessor` agent. Point out that the assessor can read model files and rules but should not make edits.
+
+Link: [Lab 06](/labs/06-skills-and-assessor/).
+
+### Lab 07 handoff
+
+Show the handoff card or prompt from assessor to improver. Then show the actual changed TMDL names and descriptions.
+
+Link: [Lab 07](/labs/07-handoffs-names-descriptions/).
+
+### Lab 08 DAX tests
+
+Run or show:
+
+```powershell
+pwsh ./scripts/Invoke-DaxQuestionTests.ps1
+```
+
+Say: "The natural-language evaluator tells us whether the assistant can answer. The DAX tests tell us whether the model can calculate."
+
+Link: [Lab 08](/labs/08-relationships-and-measures/).
+
+### Lab 10 comparison
+
+Open [Expected results](/present/expected-results/) and the comparison output.
+
+Say: "The expected answers came from DuckDB, not the semantic model, so a broken model cannot grade itself."
+
+Link: [Lab 10](/labs/10-question-tester-after/).
+
+### Lab 11 hooks
+
+Show a denied protected edit, an ask decision for destructive cleanup, and a post-edit lint message if you have one.
+
+Link: [Lab 11](/labs/11-copilot-cli-and-hooks/).
+
+### Lab 12 PR
+
+Open the PR. Show validation, template fields, CODEOWNERS, model-reviewer notes, and Copilot review.
+
+Link: [Lab 12](/labs/12-pull-request-and-code-review/).
+
+### Lab 13 cloud agent
+
+Show `.github/workflows/copilot-setup-steps.yml`, the cloud issue, and the cloud agent branch or PR.
+
+Say: "Cloud agent works best when the repo already has setup steps, tests, instructions, and tight issue scope."
+
+Link: [Lab 13](/labs/13-cloud-agent/).
+
+### Lab 14 in five minutes
+
+Pick one small extension: a prompt, a skill reference, or a rule update. Do not build a full new lab live.
+
+Say: "Build-your-own does not start with a giant agent. It starts with one repeated task and the smallest customization that makes it reliable."
+
+Link: [Lab 14](/labs/14-build-your-own/).
+
+<Aside type="tip" title="Use the 60-minute format for workshops">
+The longer version gives learners time to see the difference between answer quality, model correctness, guardrails, and pull request governance.
+</Aside>

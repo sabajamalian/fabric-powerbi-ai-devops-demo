@@ -1,0 +1,18 @@
+---
+import { Badge } from '@astrojs/starlight/components';
+
+interface Props {
+	kind: 'windows-only' | 'macos' | 'file-mode' | 'paid-plan' | 'preview' | 'optional';
+}
+const map = {
+	'windows-only': { text: 'Windows only', variant: 'caution' },
+	macos: { text: 'Works on macOS', variant: 'success' },
+	'file-mode': { text: 'No Desktop? File mode works', variant: 'default' },
+	'paid-plan': { text: 'Needs a paid Copilot plan', variant: 'note' },
+	preview: { text: 'Preview feature', variant: 'tip' },
+	optional: { text: 'Optional', variant: 'default' },
+} as const;
+const { text, variant } = map[Astro.props.kind];
+---
+
+<Badge text={text} variant={variant} />

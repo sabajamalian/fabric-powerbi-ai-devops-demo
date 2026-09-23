@@ -1,0 +1,34 @@
+# Normalize line endings so Windows, macOS, and GitHub Actions produce identical files.
+* text=auto
+
+# Files that must be byte-identical everywhere (generated data, expected answers, shell scripts).
+*.csv                     text eol=lf
+evaluation/expected/*.json text eol=lf
+*.sh                      text eol=lf
+*.tmdl                    text eol=lf
+*.pbism                   text eol=lf
+*.pbir                    text eol=lf
+*.pbip                    text eol=lf
+.platform                 text eol=lf
+
+# Windows-only launchers.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# PowerShell works with either; keep LF in the repo, Git converts on Windows checkout.
+*.ps1  text
+*.psm1 text
+*.psd1 text
+
+# Binary assets.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.pdf  binary
+*.abf  binary
+*.pbix binary
+*.zip  binary
+*.woff2 binary

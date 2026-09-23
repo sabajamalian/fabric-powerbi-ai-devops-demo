@@ -1,0 +1,52 @@
+---
+title: "AI readiness checklist"
+description: "The C01 to C15 semantic model checklist, why each rule matters for AI, how to check it, and which lab fixes it."
+---
+
+import RepoFile from '~/components/RepoFile.astro';
+
+## Checklist source
+
+The checklist comes from `rules/naming-conventions.yaml`, `rules/required-model-objects.yaml`, and the pharmacy model conventions skill. `tools/python/pharmacy_demo/conventions.py` assigns issue IDs `C01` to `C15`.
+
+<RepoFile path="rules/naming-conventions.yaml" />
+<RepoFile path="rules/required-model-objects.yaml" />
+<RepoFile path="tools/python/pharmacy_demo/conventions.py" lines="37-51" />
+
+## Run one rule
+
+```powershell
+pwsh ./scripts/Test-ModelConventions.ps1 -Rule C01
+```
+
+Run all rules:
+
+```powershell
+pwsh ./scripts/Test-ModelConventions.ps1
+```
+
+## Rules
+
+| Rule | Item | Why it matters for AI | How it is checked | Lab that fixes it |
+|---|---|---|---|---|
+| C01 | Business-friendly names | Natural-language prompts match business words, not source abbreviations. | Visible tables, columns, measures, and hierarchies must match the title-case pattern, avoid underscores, and spell out forbidden abbreviations. | [Lab 07](/labs/07-handoffs-names-descriptions/) |
+| C02 | Descriptions present | Copilot uses descriptions to understand semantics and avoid false assumptions. | Tables, visible columns, and measures require descriptions. | [Lab 07](/labs/07-handoffs-names-descriptions/) |
+| C03 | Description length | Short descriptions are vague. Long descriptions can be ignored or truncated by Copilot. | Descriptions must be at least 20 characters and at most 200 characters. | [Lab 07](/labs/07-handoffs-names-descriptions/) |
+| C04 | Keys and helpers hidden | Users and agents should not choose surrogate keys or sort helpers as analytical fields. | Key columns, fill IDs, and sort helpers must be hidden. | [Lab 07](/labs/07-handoffs-names-descriptions/) |
+| C05 | Default summarization | Wrong summarization creates bad totals and misleading answers. | Only approved additive columns can summarize. Others use `none`. | [Lab 07](/labs/07-handoffs-names-descriptions/) |
+| C06 | Raw codes decoded | AI should see business labels instead of raw system codes. | Raw code columns require a decoded visible alternative. | [Lab 07](/labs/07-handoffs-names-descriptions/) |
+| C07 | Required relationships | Questions need joins across dates, stores, medications, and fills. | Required relationships from `Prescription Fill` to dimensions must exist. | [Lab 07](/labs/07-handoffs-names-descriptions/) |
+| C08 | Single-direction filters | Bidirectional filters can create ambiguous paths and unstable answers. | Relationships must use single-direction filtering. | [Lab 07](/labs/07-handoffs-names-descriptions/) |
+| C09 | Marked date table | Time-intelligence questions need a proper Date table. | `Date` must be marked as a date table using the Date column. | [Lab 08](/labs/08-relationships-and-measures/) |
+| C10 | Auto date/time off | Hidden auto date tables confuse field selection and DAX behavior. | Auto date/time must be disabled. | [Lab 08](/labs/08-relationships-and-measures/) |
+| C11 | Sort-by columns | Month names and day names need chronological ordering. | Month, year-month, and day-of-week columns must use configured sort columns. | [Lab 08](/labs/08-relationships-and-measures/) |
+| C12 | Required measures | Agents should reuse trusted measures instead of improvising calculations. | Required Volume, Refills, Processing, and Time Comparison measures must exist. | [Lab 08](/labs/08-relationships-and-measures/) |
+| C13 | Measure format strings and folders | Formats help agents interpret rates, counts, and money. Folders help tool navigation. | Measures require format strings and approved display folders. | [Lab 08](/labs/08-relationships-and-measures/) |
+| C14 | Default labels | Entity recognition works better when tables have obvious label columns. | Store and Medication need default labels. | [Lab 09](/labs/09-ai-metadata/) |
+| C15 | Q&A and AI prep drafts | Copilot needs concise instructions, synonyms, schema hints, and verified examples. | `fabric/ai-prep` must contain required files, required mentions, synonyms, verified answers, and Q&A enabled state. | [Lab 09](/labs/09-ai-metadata/) |
+
+## Skill reference
+
+The skill gives agents the business context behind the rules.
+
+<RepoFile path=".github/skills/pharmacy-model-conventions/SKILL.md" lines="1-35" />

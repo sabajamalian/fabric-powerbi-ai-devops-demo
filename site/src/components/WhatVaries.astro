@@ -1,0 +1,18 @@
+---
+import { Aside } from '@astrojs/starlight/components';
+
+interface Props {
+	mustMatch: string[];
+}
+const { mustMatch } = Astro.props;
+---
+
+<Aside type="note" title="What varies between runs">
+	<p>
+		Copilot's wording, the order it works in, and the exact DAX or TMDL it writes will differ from what you see
+		here and from your neighbor's run. That's expected. <slot /> These must match:
+	</p>
+	<ul>
+		{mustMatch.map((item) => <li>{item}</li>)}
+	</ul>
+</Aside>

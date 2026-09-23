@@ -1,0 +1,90 @@
+table fact_rx_fill
+
+	column fill_id
+		dataType: int64
+		formatString: 0
+		summarizeBy: sum
+		sourceColumn: fill_id
+
+		annotation SummarizationSetBy = User
+
+	column fill_dt
+		dataType: dateTime
+		formatString: Long Date
+		summarizeBy: none
+		sourceColumn: fill_dt
+
+		annotation SummarizationSetBy = User
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column store_key
+		dataType: int64
+		formatString: 0
+		summarizeBy: sum
+		sourceColumn: store_key
+
+		annotation SummarizationSetBy = User
+
+	column med_key
+		dataType: int64
+		formatString: 0
+		summarizeBy: sum
+		sourceColumn: med_key
+
+		annotation SummarizationSetBy = User
+
+	column fill_typ
+		dataType: string
+		summarizeBy: none
+		sourceColumn: fill_typ
+
+		annotation SummarizationSetBy = User
+
+	column refill_no
+		dataType: int64
+		formatString: 0
+		summarizeBy: sum
+		sourceColumn: refill_no
+
+		annotation SummarizationSetBy = User
+
+	column qty
+		dataType: int64
+		formatString: 0
+		summarizeBy: sum
+		sourceColumn: qty
+
+		annotation SummarizationSetBy = User
+
+	column days_sply
+		dataType: int64
+		formatString: 0
+		summarizeBy: sum
+		sourceColumn: days_sply
+
+		annotation SummarizationSetBy = User
+
+	column payer_typ
+		dataType: string
+		summarizeBy: none
+		sourceColumn: payer_typ
+
+		annotation SummarizationSetBy = User
+
+	column proc_mins
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: proc_mins
+
+		annotation SummarizationSetBy = User
+
+	partition fact_rx_fill = m
+		mode: import
+		source =
+			let
+			    Source = Csv.Document(File.Contents(DataFolderPath & "fact_rx_fill.csv"), [Delimiter = ",", Columns = 10, Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+			    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+			    ChangedType = Table.TransformColumnTypes(PromotedHeaders, {{"fill_id", Int64.Type}, {"fill_dt", type date}, {"store_key", Int64.Type}, {"med_key", Int64.Type}, {"fill_typ", type text}, {"refill_no", Int64.Type}, {"qty", Int64.Type}, {"days_sply", Int64.Type}, {"payer_typ", type text}, {"proc_mins", type number}}, "en-US")
+			in
+			    ChangedType

@@ -1,0 +1,47 @@
+name: Semantic model change
+description: Request a change to the Contoso Pharmacy semantic model. Works well as a task for the Copilot cloud agent.
+title: "[model] "
+labels: ["model-change"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Synthetic data only. Don't paste real customer names, identifiers, or data into this issue.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should the model do after this change? Write it as the business question or behavior you want.
+      placeholder: Add a measure that shows the share of fills paid by Medicare, with a description and a display folder.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Objects in scope
+      description: Tables, columns, measures, or report pages this change should touch.
+      placeholder: "'Prescription Fill' table, Payer Type column, new measure in the Payer display folder"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How will a reviewer know it's done? Include the validation command.
+      value: |
+        - [ ] `pwsh ./scripts/Invoke-Validation.ps1` passes
+        - [ ] New or changed objects have descriptions and display folders
+        - [ ] `pwsh ./scripts/Test-ReportBindings.ps1` passes
+    validations:
+      required: true
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Suggested custom agent
+      options:
+        - model-improver
+        - model-assessor
+        - model-reviewer
+        - none
+    validations:
+      required: false

@@ -1,0 +1,79 @@
+---
+title: Security and synthetic data
+description: "How the lab keeps data synthetic, avoids secrets, uses guardrails, and handles vulnerability reports."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import RepoFile from '~/components/RepoFile.astro';
+
+## Synthetic data statement
+
+Everything in this repository is synthetic. The generator creates fictional stores, generic medications, dates, and anonymous fill events from a fixed seed. There are no patients, prescribers, members, addresses, health records, real customer names, or PHI.
+
+<RepoFile path="data/README.md" lines="1-15" />
+
+The security policy says the same thing and sets the boundary for the repo:
+
+<RepoFile path="SECURITY.md" lines="3-20" />
+
+## Not for real health data
+
+Do not use this repository, scripts, workflows, issues, screenshots, or lab site to store or process real health data, personal data, customer data, tenant IDs, workspace IDs, capacity IDs, subscription IDs, object IDs, secrets, internal URLs, or real account screenshots.
+
+If you adapt the pattern for real data, do it in a separate private repository with your organization's security review, data handling rules, governance, and deployment controls.
+
+## No secrets committed
+
+Configuration files use placeholders and prompt inputs instead of literal secrets. For example, MCP settings should use `${input:...}` or environment variables where values are needed. The cloud-agent MCP template contains no secrets and marks cloud Power BI Modeling MCP as read-only for this lab.
+
+<RepoFile path="config/cloud-agent-mcp.template.json" lines="1-12" />
+
+## Secret scanning and push protection
+
+The upstream public repository has GitHub secret scanning and push protection enabled. Local validation also runs hygiene checks that look for secret-like strings, GUIDs, email addresses, forbidden files, and PHI-like columns outside the allowlist.
+
+Run the same validation before opening a PR:
+
+```powershell
+pwsh ./scripts/Invoke-Validation.ps1 -Only hygiene
+```
+
+CI runs the full validation on pull requests and pushes to `main`.
+
+## Dependency review
+
+The CI workflow includes GitHub dependency review on pull requests and fails on moderate or higher severity when dependency manifests change.
+
+<RepoFile path=".github/workflows/ci.yml" lines="80-88" />
+
+## Least-privilege workflow permissions
+
+Workflows use read-only repository permissions unless a job needs more. The cloud setup workflow grants `contents: read` so setup can install and validate before the agent starts.
+
+<RepoFile path=".github/workflows/copilot-setup-steps.yml" lines="13-21" />
+
+## Hooks as guardrails
+
+Hooks block or flag risky agent actions. The repo hook configuration runs before tool use, after tool use, and at session boundaries. On Windows it calls PowerShell. On Linux and macOS it calls bash.
+
+<RepoFile path=".github/hooks/guardrails.json" lines="1-40" />
+
+The hooks are guardrails, not a replacement for review. You still inspect diffs, run validation, and use pull requests.
+
+## Tool approval
+
+Copilot tool calls can read, edit, run commands, or call MCP tools depending on the selected agent and surface. Read the tool request before approving it. Prefer custom agents with narrow tool lists when a task does not need broad access.
+
+## Site privacy
+
+The lab site stores progress in browser local storage. It has no analytics and no third-party scripts. Static assets are bundled with the site.
+
+## Reporting a vulnerability
+
+Report security issues privately through GitHub's **Report a vulnerability** button on the repository **Security** tab. Do not open a public issue for a vulnerability. The security policy says you should receive an acknowledgement within five business days.
+
+<RepoFile path="SECURITY.md" lines="22-24" />
+
+<Aside type="caution" title="Keep the demo synthetic">
+If you need a realistic workshop, create more synthetic rows or signals. Do not paste real extracts into `data/generated/`, issues, screenshots, prompts, or chat.
+</Aside>

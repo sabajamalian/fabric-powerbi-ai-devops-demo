@@ -1,0 +1,59 @@
+name: Lab feedback
+description: Something in a lab was unclear, wrong, or out of date.
+title: "[lab] "
+labels: ["lab-feedback"]
+body:
+  - type: input
+    id: lab
+    attributes:
+      label: Lab
+      placeholder: "Lab 07: Handoffs, names, and descriptions"
+    validations:
+      required: true
+  - type: input
+    id: step
+    attributes:
+      label: Step
+      placeholder: "Step 4"
+  - type: dropdown
+    id: track
+    attributes:
+      label: Track
+      options:
+        - Full hands-on
+        - Core
+        - Copilot customization only
+        - Presenter
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows 11
+        - macOS
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Tool versions
+      description: Output of `pwsh ./scripts/Test-Prerequisites.ps1 -Json` is ideal. Remove anything that identifies you.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Include the exact error text if there was one. No screenshots of real accounts or tenants.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: site-version
+    attributes:
+      label: Site version
+      description: Filled in automatically by the feedback link.

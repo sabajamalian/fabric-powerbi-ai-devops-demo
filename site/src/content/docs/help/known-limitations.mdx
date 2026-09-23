@@ -1,0 +1,84 @@
+---
+title: Known limitations
+description: "Current preview features, platform limits, plan requirements, nondeterminism, and tested versions for the lab."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+
+This page is current as of 2026-09-23. Microsoft and GitHub product names, preview labels, and UI paths can change. The lab pages omit `lastVerified` because the full track has not been run end to end on Windows yet.
+
+## Preview and changing features
+
+<PlatformBadge kind="preview" />
+
+The lab uses or discusses several features that are still moving:
+
+- Power BI Project files, TMDL, and PBIR. Desktop options and file output can change by Desktop release.
+- Power BI **Prep data for AI** output. The lab writes reviewable drafts under `fabric/ai-prep/`; it does not write Desktop-managed Copilot folders.
+- Power BI Modeling MCP. The cloud-agent template pins `@microsoft/powerbi-modeling-mcp@0.5.0-beta.13`, but the lab does not depend on it in cloud sessions.
+- VS Code hooks and agent customizations. Commands and panels can move between VS Code releases.
+- GitHub Copilot CLI and Copilot cloud agent. Cloud agent issue assignment is public preview in GitHub docs.
+- APM 0.x. This repo pins APM CLI 0.31.0 for the tested flow.
+- Astro Starlight 0.x in this site.
+
+## Windows-only parts
+
+<PlatformBadge kind="windows-only" />
+
+Power BI Desktop runs only on Windows. Labs that open the PBIP, refresh data in Desktop, connect Desktop MCP, or run live DAX tests are Windows-only. macOS can still use the file-mode path for TMDL, PBIR, validation, agent customization, hooks, cloud agent, and the site.
+
+## Plan requirements
+
+<PlatformBadge kind="paid-plan" />
+
+GitHub Copilot code review and Copilot cloud agent require paid Copilot plan support and may require org or repository policy enablement. Business and Enterprise accounts can be blocked by admin policy even when the UI appears locally.
+
+Fabric Copilot, Power BI Copilot, and Fabric data agents are not used in this lab. Microsoft Learn currently states that Fabric data agents need paid Fabric capacity such as F2 or higher, or Power BI Premium capacity with Fabric enabled. Those products are roadmap topics, not prerequisites.
+
+## Agent nondeterminism
+
+Agents can produce different wording, plans, DAX, and intermediate edits each run. The labs use scripts, checks, and `WhatVaries` callouts so you verify durable state instead of exact chat text. When an agent overreaches, reject the diff, narrow the prompt, or restore a checkpoint.
+
+## Not fully verified on Windows yet
+
+The repo and site have validation scripts, but the full lab track has not yet been run end to end on a clean Windows 11 machine. That is why lab frontmatter does not include `lastVerified`. Treat screenshots, menu names, and preview UI labels as subject to change until a full Windows pass is recorded.
+
+## Tested versions and pins
+
+The site pins Astro and Starlight here:
+
+<RepoFile path="site/package.json" lines="19-29" />
+
+APM and Skills for Fabric are pinned here:
+
+<RepoFile path="apm.lock.yaml" lines="1-18" />
+
+The Python toolchain uses hashed requirements. Key versions include DuckDB 1.5.5, jsonschema 4.26.0, PyYAML 6.0.3, pytest 9.1.1 in dev, and ruff 0.16.7 in dev.
+
+The CI workflow pins action SHAs and currently uses Python 3.12 and Node 22:
+
+<RepoFile path=".github/workflows/ci.yml" lines="23-33" />
+
+The cloud agent setup uses Ubuntu, Python 3.12, Node 22, and APM CLI 0.31.0:
+
+<RepoFile path=".github/workflows/copilot-setup-steps.yml" lines="16-43" />
+
+## Product scope not covered
+
+The labs do not cover:
+
+- Fabric workspaces, deployment pipelines, or production deployment.
+- Power BI Copilot or Fabric data agents against a published model.
+- Fabric ontology or Fabric IQ modeling.
+- Tenant governance, sensitivity labels, endorsement, lineage, and monitoring at scale.
+- Real data, PHI, customer data, or regulated deployments.
+
+See [Roadmap](/roadmap/) for phase two ideas.
+
+## Known repo gaps
+
+<Aside type="note" title="Report drift">
+If a command, preview label, or check no longer matches the product, open a lab-feedback issue from the affected page. Include the lab number, step number, your OS, and the exact message.
+</Aside>

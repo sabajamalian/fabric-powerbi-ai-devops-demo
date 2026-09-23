@@ -1,0 +1,82 @@
+---
+title: Prerequisites
+description: Accounts, tools, operating systems, and corporate-device notes for the Contoso Pharmacy lab.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Accounts and plans
+
+You need:
+
+- A GitHub account.
+- A GitHub Copilot plan that supports VS Code Chat and agent mode.
+- Access to custom instructions, custom agents, prompt files, skills, MCP, and Copilot CLI for the customization labs.
+- A paid Copilot plan, or an organization policy that enables access, for Copilot code review in [Lab 12](/labs/12-pull-request-and-code-review/) and Copilot cloud agent in [Lab 13](/labs/13-cloud-agent/).
+
+If you use Copilot Business or Enterprise, ask an organization owner to check these policies before the workshop:
+
+- Copilot Chat and agent mode in the IDE.
+- Repository custom instructions and path instructions.
+- MCP servers in Copilot.
+- Custom agents, prompt files, and skills.
+- Copilot CLI access.
+- Copilot code review.
+- Copilot cloud agent.
+- Package downloads from GitHub, npm, Python package indexes, and the Microsoft Store or your software catalog.
+
+## Hardware and operating system
+
+Use Windows 11 23H2 or later for the full lab. Power BI Desktop is Windows only. macOS can run the file-mode path for instructions, TMDL and PBIR reading, validation, hooks, and most customization work, but it can't open the PBIP in Desktop or run Desktop DAX tests.
+
+Recommended hardware:
+
+- 16 GB RAM or more.
+- 10 GB free disk space.
+- A network connection that can reach GitHub, npm, Python package indexes, and Microsoft download endpoints.
+
+## Tools
+
+| Tool | Minimum | Required for | Check |
+|---|---:|---|---|
+| PowerShell | 7.4 | All scripts | `pwsh ./scripts/Test-Prerequisites.ps1` |
+| Git | 2.40 | Clone, checkpoints, branches | `git --version` |
+| Git core.longpaths | `true` on Windows | Long PBIP paths | `git config --global --get core.longpaths` |
+| Python | 3.12 | `.venv`, validation, grading | `python --version` or `py -3.12 --version` |
+| VS Code | Current stable | Copilot Chat, agents, instructions | `code --version` |
+| Node.js | 20 or later | Local site, `npx` MCP servers | `node --version` |
+| Power BI Desktop | Current monthly build | PBIP, refresh, Desktop MCP, DAX tests | Windows only |
+| GitHub CLI | 2.40 or later | Pull requests, cloud agent setup labs | `gh --version` |
+| Copilot CLI | Current npm package | Lab 11 | `copilot --version` |
+
+`Test-Prerequisites.ps1` is the source of truth. It reports PASS, WARN, FAIL, or SKIP and prints fix commands. It installs nothing.
+
+## What you do not need
+
+You do not need:
+
+- A Microsoft Fabric tenant.
+- Fabric capacity.
+- A Power BI workspace.
+- A service principal.
+- An Azure subscription.
+- A live database.
+- Real customer, patient, or employee data.
+
+The model reads local synthetic CSV files and all checks run locally or in GitHub Actions.
+
+## Corporate device notes
+
+Managed devices can block parts of the lab. Ask early if you see one of these:
+
+- `winget` or Microsoft Store installs are blocked.
+- VS Code extensions are restricted.
+- Copilot policy disables agent mode, MCP, code review, or cloud agent.
+- npm or Python package downloads require a proxy.
+- PowerShell execution policy blocks scripts.
+- GitHub CLI browser sign-in is blocked.
+- Power BI Desktop preview features are managed by policy.
+
+<Aside type="tip" title="Best workshop setup">
+Run [Lab 00](/labs/00-workstation-setup/) and [Lab 01](/labs/01-get-your-copy/) before the workshop starts. That leaves the live time for model and Copilot work, not installers.
+</Aside>

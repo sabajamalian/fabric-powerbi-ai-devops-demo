@@ -1,0 +1,77 @@
+---
+title: Choose a track
+description: Pick the lab path that matches your time, platform, and Copilot access.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import TrackPicker from '~/components/TrackPicker.astro';
+
+Pick a track before you start. The picker saves your choice in this browser, and each lab's **Next** link follows it.
+
+<TrackPicker />
+
+## Tracks
+
+| Track | Labs | Time | Best for |
+|---|---|---:|---|
+| Full hands-on | 00, 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15 | 8 hr 50 min | You want every feature and every validation path. |
+| Core | 01, 02, 04, 05, 06, 07, 10, 11, 12 | 4 hr 55 min | You want the model improvement loop and PR review. |
+| Copilot customization only | 00, 01, 03, 06, 07, 11, 12, 13, 14, 15 | 5 hr 40 min | You care most about instructions, agents, skills, hooks, code review, and cloud agent. |
+| Presenter | 00, 01, 02, then the present pages | 1 hr 45 min plus presenter prep | You need to run or rehearse a demo. |
+
+## Lab durations
+
+| Lab | Duration |
+|---|---:|
+| 00. Set up your workstation | 45 min |
+| 01. Get your copy and explore the repo | 30 min |
+| 02. Meet the baseline model | 30 min |
+| 03. Repository and path instructions | 25 min |
+| 04. Connect Power BI Modeling MCP | 30 min |
+| 05. question-tester, before | 30 min |
+| 06. Skills and the read-only assessor | 35 min |
+| 07. Handoffs, names, and descriptions | 45 min |
+| 08. Relationships, date table, and measures | 45 min |
+| 09. AI metadata | 30 min |
+| 10. question-tester, after | 25 min |
+| 11. Copilot CLI and hooks | 35 min |
+| 12. Pull request, CI, and Copilot code review | 35 min |
+| 13. Copilot cloud agent | 35 min plus agent run time |
+| 14. Build your own agent, skill, and prompt | 45 min |
+| 15. Clean up and next steps | 10 min |
+
+## Platform notes
+
+Windows 11 with Power BI Desktop gives you the full lab. These labs need Desktop for the main path:
+
+- [Lab 02](/labs/02-meet-the-baseline-model/) opens and refreshes the PBIP.
+- [Lab 04](/labs/04-connect-mcp/) connects MCP to a Desktop model.
+- [Lab 05](/labs/05-question-tester-before/) uses live metadata and DAX through MCP.
+- [Lab 08](/labs/08-relationships-and-measures/) runs Desktop DAX tests.
+- [Lab 10](/labs/10-question-tester-after/) repeats the live question test.
+
+macOS can still do file-mode work with TMDL, PBIR, instructions, skills, prompts, hooks, validation, and most repo checks. Desktop-specific checks skip or need a Windows machine.
+
+## Copilot plan notes
+
+Most labs work with VS Code Chat and agent mode. The later GitHub-hosted features need more:
+
+- [Lab 12](/labs/12-pull-request-and-code-review/) needs Copilot code review. GitHub documents code review as a Copilot feature that can also be controlled by organization policy.
+- [Lab 13](/labs/13-cloud-agent/) needs Copilot cloud agent. Organization admins may need to enable it for Business or Enterprise seats.
+- MCP, custom agents, prompt files, and Copilot CLI can also be disabled by organization policy, even when your account has a Copilot seat.
+
+<Aside type="note" title="If a paid feature is blocked">
+Use the Core track through Lab 11, or read the presenter fallback pages. The repo has sample outputs for baseline and AI-ready runs, so you can still see the learning arc.
+</Aside>
+
+## Presenter path
+
+The Presenter track starts with setup and baseline inspection, then switches to:
+
+- [30-minute demo](/present/30-minute-demo/)
+- [60-minute demo](/present/60-minute-demo/)
+- [Facilitator checklist](/present/facilitator-checklist/)
+- [Fallbacks and reset](/present/fallbacks-and-reset/)
+- [Expected results](/present/expected-results/)
+
+Use this path when the audience needs the story, not every hands-on edit.

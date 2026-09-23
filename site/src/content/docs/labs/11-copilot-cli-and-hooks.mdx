@@ -1,0 +1,325 @@
+---
+title: "Lab 11: Copilot CLI and hooks"
+description: "Run the repo's custom agents in Copilot CLI and see hook guardrails deny unsafe edits and lint TMDL changes."
+sidebar:
+  label: "11. Copilot CLI and hooks"
+lab:
+  number: 11
+  durationMinutes: 35
+  level: advanced
+  platforms: [windows, macos]
+  requiresDesktop: false
+  surfaces: [cli]
+  primitives: [cli, custom-agent, skill, hook]
+  startCheckpoint: lab09-complete
+  endCheckpoint: none
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import WhatVaries from '~/components/WhatVaries.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+Instructions are guidance. Hooks are code. In this lab you run Copilot CLI from the repo, pick the same custom agents and skills, and watch a deterministic hook deny an unsafe edit before the agent can make it. Then you make a TMDL edit and see the post-tool hook run the local linter automatically.
+
+## Concepts
+
+- **Copilot CLI:** the terminal Copilot surface. GitHub docs say you install it with `npm install -g @github/copilot`, start it with `copilot`, trust the folder, and use slash commands such as `/agent` and `/skills`.
+- **Repository hook:** a JSON file under `.github/hooks/*.json` that runs commands on lifecycle events. See [Hooks](/reference/hooks/).
+- **preToolUse:** a hook event that can return `permissionDecision: "deny"` with a reason before a tool runs.
+- **postToolUse:** a hook event that can add context after a successful tool call. This repo uses it to run the TMDL lint after `.tmdl` edits.
+- **VS Code agent hooks:** VS Code documents agent hooks as preview. VS Code can load hooks from `.github/hooks`, but event names and OS-specific command fields can differ by version. Use Copilot CLI for this lab's hook checks.
+
+## Before you begin
+
+- You finished [Lab 10](/labs/10-question-tester-after/) or restored `lab09-complete`.
+- You ran `pwsh ./scripts/Initialize-DevEnvironment.ps1` in Lab 01, so `.venv` exists. The hook wrappers do nothing if `.venv` is missing.
+- Copilot CLI is installed. If it isn't, follow GitHub's current install command: `npm install -g @github/copilot`.
+- Close Power BI Desktop if it is open. This lab may touch TMDL text and then restore the demo edit.
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Inspect the hook configuration
+
+Open the hook files before you start the CLI.
+
+1. Open Quick Open: **Ctrl+P** (macOS: **Cmd+P**), or **Go > Go to File**.
+2. Open `.github/hooks/guardrails.json`.
+3. Open `scripts/hooks/run-hook.ps1` and `scripts/hooks/run-hook.sh`.
+4. Open `tools/python/pharmacy_demo/hooks.py`.
+
+The JSON wires each lifecycle event to a PowerShell or bash wrapper:
+
+<RepoFile path=".github/hooks/guardrails.json" />
+
+The Python implementation writes JSON lines to `out/hooks/session.log`:
+
+<RepoFile path="tools/python/pharmacy_demo/hooks.py" lines="92-103" />
+
+**You should see:** `sessionStart`, `preToolUse`, `postToolUse`, and `sessionEnd` configured. On Windows the wrapper calls `scripts/hooks/run-hook.ps1 -HookEvent <event>`. On macOS it calls `scripts/hooks/run-hook.sh <event>`.
+
+<Checkpoint lab="11" step="1" />
+
+### Step 2. Start Copilot CLI and trust the folder
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+copilot
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+copilot
+```
+
+</TabItem>
+</Tabs>
+
+1. When Copilot asks whether you trust this folder, choose **Yes, proceed** for this session, or **Yes, and remember this folder for future sessions** if this is your own clone.
+2. If the CLI asks you to sign in, type `/login` and follow the browser flow.
+3. Wait for the first prompt to appear.
+
+**You should see:** the `sessionStart` hook injects a message like "Contoso Pharmacy lab. All data is synthetic" and reports the model state. The hook also appends a `sessionStart` entry to `out/hooks/session.log`.
+
+<Checkpoint lab="11" step="2" />
+
+### Step 3. List agents and skills in the CLI
+
+Use the CLI slash commands to see the repo customizations.
+
+```text
+/agent
+/skills list
+/skills info prep-data-for-ai
+```
+
+1. In `/agent`, choose **model-improver** for the next two steps.
+2. In `/skills list`, confirm the repo skills appear.
+3. In `/skills info prep-data-for-ai`, confirm the skill location is under this repo.
+
+**You should see:** the same custom agents from `.github/agents/` and skills from `.github/skills/` that you used in VS Code. GitHub docs also support `/skills reload` if you add a skill during a running CLI session.
+
+<Checkpoint lab="11" step="3" />
+
+### Step 4. Trigger a denied tool call
+
+Ask the selected agent to make an edit that the repo never allows:
+
+```text
+Change data/generated/dim_store.csv so Riverbend is in the North region.
+```
+
+Approve only enough for the agent to attempt the edit. Don't approve a workaround that changes generator code or writes somewhere else.
+
+The denial rules are in Python:
+
+<RepoFile path="tools/python/pharmacy_demo/hooks.py" lines="40-68" />
+
+The hook returns a deny decision and reason in the format the Copilot hooks reference documents:
+
+<RepoFile path="tools/python/pharmacy_demo/hooks.py" lines="230-235" />
+
+**You should see:** the CLI tells the agent the tool call was denied. The reason names `data/generated/dim_store.csv` and says generated data must come from the generator. `out/hooks/session.log` gets a JSON line with `"event":"preToolUse"` and `"decision":"deny"`.
+
+<WhatVaries mustMatch={['out/hooks/session.log has a preToolUse entry', 'The latest denied entry has decision deny', 'No file under data/generated/ changes']}>
+The exact tool name depends on how the agent tries to edit the file. The hook checks paths, so the denial should be the same.
+</WhatVaries>
+
+<Checkpoint lab="11" step="4" />
+
+### Step 5. Trigger the postToolUse TMDL lint
+
+Now ask for a small TMDL edit that you can restore afterward:
+
+```text
+Make a harmless description wording improvement in fabric/ContosoPharmacy.SemanticModel/definition/tables/Date.tmdl, then stop after saving the file.
+```
+
+Approve the edit after you inspect it. If the agent proposes a model-wide change, tell it: "Only make one description wording change in Date.tmdl."
+
+The post-tool hook runs the TMDL lint only when a `.tmdl` file was edited:
+
+<RepoFile path="tools/python/pharmacy_demo/hooks.py" lines="206-252" />
+
+**You should see:** the CLI continues after the edit, and `out/hooks/session.log` gets a JSON line with `"event":"postToolUse"` and a `"lint"` value such as `"pass"` or `"1 error(s)"`. If lint errors appear, ask the agent to fix them before continuing.
+
+<Checkpoint lab="11" step="5" />
+
+### Step 6. Read the hook log and restore the demo edit
+
+Open the log from the terminal and then restore the harmless TMDL edit.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+Get-Content out/hooks/session.log -Tail 20
+Select-String -Path out/hooks/session.log -Pattern '"decision":"deny"','"lint"'
+git restore -- fabric/ContosoPharmacy.SemanticModel/definition/tables/Date.tmdl
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+tail -20 out/hooks/session.log
+grep -E '"decision":"deny"|"lint"' out/hooks/session.log
+git restore -- fabric/ContosoPharmacy.SemanticModel/definition/tables/Date.tmdl
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** at least one denied `preToolUse` event and at least one `postToolUse` event with `lint`. `git status --short fabric` should be clean after the restore.
+
+<Checkpoint lab="11" step="6" />
+
+### Step 7. End the CLI session cleanly
+
+In Copilot CLI, press **Ctrl+C** once and confirm that you want to exit. If your version lists a quit slash command in `?`, you can use that instead. Then read the last log entry.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+Get-Content out/hooks/session.log -Tail 5
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+tail -5 out/hooks/session.log
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** a `sessionEnd` entry if the CLI emitted the event. Some exits can terminate before a long-running end hook writes, so the Lab 11 checks focus on the deny and lint entries.
+
+<Checkpoint lab="11" step="7" />
+
+### Step 8. Compare hooks with instructions
+
+Read the guardrail side by side with the evaluation instructions.
+
+<RepoFile path=".github/instructions/evaluation.instructions.md" lines="7-13" />
+
+The instruction says not to read or edit answers. The hook enforces the dangerous parts with code. That means a prompt injection can tell the agent to ignore instructions, but it still can't edit `data/generated/` or `evaluation/expected/` through a normal tool call when the hook runs.
+
+<Aside type="note" title="VS Code preview status">
+VS Code's agent hooks documentation says hooks are preview and can be disabled by organization policy. It also documents PascalCase event names such as `PreToolUse` and `PostToolUse`. This repo's lab check is based on the Copilot CLI log format from `tools/python/pharmacy_demo/hooks.py`, so use CLI for the required evidence.
+</Aside>
+
+**You should see:** the difference between advisory guidance and deterministic checks. The same policy appears in instructions for model behavior and hooks for enforcement.
+
+<Checkpoint lab="11" step="8" />
+
+## Verify your work
+
+<VerifyStep lab="11" />
+
+## Troubleshooting
+
+<details>
+<summary>Copilot CLI isn't installed</summary>
+
+Install it with the current GitHub Docs command: `npm install -g @github/copilot`. Node.js 22 or later is required for the npm install path. You can also use WinGet on Windows or Homebrew on macOS if those are allowed on your machine.
+
+</details>
+
+<details>
+<summary>The hook says .venv is missing</summary>
+
+Run `pwsh ./scripts/Initialize-DevEnvironment.ps1` from the repo root. The wrappers intentionally exit 0 when `.venv` is missing so a fresh clone still works, but the guardrails won't run until the Python tools are installed.
+
+</details>
+
+<details>
+<summary>No denied event appears in session.log</summary>
+
+Make sure you asked for an edit under `data/generated/`, `evaluation/expected/`, `.pbi/`, or `*.SemanticModel/Copilot/`. A read-only request doesn't trigger the deny. If the agent refused before using a tool, ask it to apply the edit so the hook can block the tool call.
+
+</details>
+
+<details>
+<summary>No lint event appears after the TMDL step</summary>
+
+The post-tool hook only logs lint when the tool input names a path ending in `.tmdl`. Ask for a direct edit to `fabric/ContosoPharmacy.SemanticModel/definition/tables/Date.tmdl`, not a general review or a command that doesn't pass the file path to the hook.
+
+</details>
+
+<details>
+<summary>VS Code hooks behave differently</summary>
+
+VS Code agent hooks are preview. Check **Developer: Show Agent Debug Logs** and your organization's policy settings. For this lab, use Copilot CLI because `Test-LabProgress.ps1 -Lab 11` reads `out/hooks/session.log` written by the repo's hook implementation.
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="Why use a hook instead of only an instruction?"
+	options={[
+		'A hook runs deterministic code at tool boundaries, while an instruction only guides model behavior.',
+		'A hook improves DAX performance.',
+		'A hook lets Power BI Desktop refresh faster.',
+	]}
+	answer={0}
+	explanation="Instructions shape the agent's choices. Hooks inspect actual tool calls and can deny or add context regardless of prompt wording."
+/>
+
+<KnowledgeCheck
+	question="Which log entry satisfies the Lab 11 deny check?"
+	options={[
+		'A sessionStart entry with model state.',
+		'A preToolUse entry with decision deny.',
+		'A postToolUse entry with lint pass.',
+	]}
+	answer={1}
+	explanation="The check reads out/hooks/session.log and looks for event preToolUse plus decision deny."
+/>
+
+<KnowledgeCheck
+	question="When does this repo's postToolUse lint run?"
+	options={[
+		'After any prompt.',
+		'After a successful tool call that edited a path ending in .tmdl.',
+		'Only when Power BI Desktop is open.',
+	]}
+	answer={1}
+	explanation="The hook collects tool paths and runs the TMDL lint only when a .tmdl target was edited."
+/>
+
+## Recap and next
+
+You started Copilot CLI, loaded the repo's custom agents and skills, and captured two hook proofs: a denied unsafe edit and an automatic TMDL lint after a model edit. Next you push your feature branch, open a pull request, let CI validate it, and request a Copilot code review.
+
+<NextLab current="11" />
+
+## Go further
+
+- Add a user-level hook in `~/.copilot/hooks/` that logs session starts, then remove it after testing.
+- Ask Copilot CLI to explain the latest denied log entry and suggest the safe path.
+- Compare the CLI hook docs with VS Code's preview hook docs and note the event-name differences.
+
+<FeedbackLink />

@@ -1,0 +1,71 @@
+{
+  "question_id": "Q02",
+  "question": "Which medication categories experienced the largest volume changes?",
+  "generated_by": "pharmacy_demo.oracle (DuckDB over data/generated/*.csv)",
+  "columns": [
+    "category",
+    "prior_month_fills",
+    "latest_month_fills",
+    "change",
+    "change_pct"
+  ],
+  "rows": [
+    {
+      "category": "Respiratory",
+      "prior_month_fills": 219,
+      "latest_month_fills": 456,
+      "change": 237,
+      "change_pct": 1.082192
+    },
+    {
+      "category": "Anti-infective",
+      "prior_month_fills": 197,
+      "latest_month_fills": 271,
+      "change": 74,
+      "change_pct": 0.375635
+    },
+    {
+      "category": "Dermatology",
+      "prior_month_fills": 112,
+      "latest_month_fills": 60,
+      "change": -52,
+      "change_pct": -0.464286
+    },
+    {
+      "category": "Cardiovascular",
+      "prior_month_fills": 346,
+      "latest_month_fills": 377,
+      "change": 31,
+      "change_pct": 0.089595
+    },
+    {
+      "category": "Pain and Inflammation",
+      "prior_month_fills": 185,
+      "latest_month_fills": 210,
+      "change": 25,
+      "change_pct": 0.135135
+    },
+    {
+      "category": "Gastrointestinal",
+      "prior_month_fills": 213,
+      "latest_month_fills": 203,
+      "change": -10,
+      "change_pct": -0.046948
+    },
+    {
+      "category": "Diabetes",
+      "prior_month_fills": 253,
+      "latest_month_fills": 246,
+      "change": -7,
+      "change_pct": -0.027668
+    },
+    {
+      "category": "Mental Health",
+      "prior_month_fills": 236,
+      "latest_month_fills": 229,
+      "change": -7,
+      "change_pct": -0.029661
+    }
+  ],
+  "data_fingerprint": "658460be187cd13729aa2161c1ecaa1a2590538eb83a93f18ca1a1c3c65efcee"
+}

@@ -1,0 +1,37 @@
+[project]
+name = "pharmacy-demo"
+version = "1.0.0"
+description = "Synthetic Contoso Pharmacy data, oracle, validators, grader, and lab checks for the agentic Copilot lab."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = [
+  "duckdb>=1.1",
+  "PyYAML>=6.0",
+  "jsonschema>=4.23",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3", "ruff>=0.8"]
+
+[project.scripts]
+pharmacy-demo = "pharmacy_demo.cli:main"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["pharmacy_demo*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "PTH"]
+ignore = ["E501"]

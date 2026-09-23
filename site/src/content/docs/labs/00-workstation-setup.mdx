@@ -1,0 +1,403 @@
+---
+title: "Lab 00: Set up your workstation"
+description: Install the local tools and Copilot access you need before you clone the lab repo.
+sidebar:
+  label: "00. Workstation setup"
+lab:
+  number: 0
+  durationMinutes: 45
+  level: intro
+  platforms: [windows, macos]
+  requiresDesktop: false
+  surfaces: [vscode, cli, github, desktop]
+  primitives: [setup, prerequisites, copilot-cli]
+  startCheckpoint: none
+  endCheckpoint: none
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+The rest of the lab moves fast. Agents will run PowerShell scripts, read TMDL files, start MCP servers, open Power BI Desktop, and use GitHub features. This page gets the machine ready without hiding any installs behind an automation script. You run each installer yourself, then the repo check in [Lab 01](/labs/01-get-your-copy/) tells you what still needs attention.
+
+## Concepts
+
+- **Power BI Desktop:** the Windows app that opens the PBIP project. You need it for Desktop and MCP labs. See [Lab 02](/labs/02-meet-the-baseline-model/).
+- **PowerShell 7:** the shell used by every lab script. Windows PowerShell 5.1 is not enough.
+- **GitHub Copilot agent mode:** the VS Code chat mode where Copilot can use tools, edit files, and run commands after you approve them.
+- **Copilot CLI:** the terminal surface used in [Lab 11](/labs/11-copilot-cli-and-hooks/).
+- **Organization policy:** a GitHub Business or Enterprise admin switch that can allow or block MCP, custom agents, code review, and cloud agent.
+
+## Before you begin
+
+- Use a Windows 11 machine for the full lab. macOS works for file-based labs, but Power BI Desktop does not run there.
+- Sign in to Windows with an account that can install applications, or know how to request them from IT.
+- Have a GitHub account with Copilot enabled. Labs 12 and 13 need paid plan features.
+- Don't clone the repo yet. That happens in [Lab 01](/labs/01-get-your-copy/).
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Check your operating system
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+1. Press **Windows+R**.
+2. Type `winver` and press **Enter**.
+3. Confirm the dialog says **Windows 11**, version **23H2** or later.
+
+</TabItem>
+<TabItem label="macOS">
+
+1. Open **Apple menu > About This Mac**.
+2. Confirm you're on a current macOS release that can run VS Code, PowerShell 7, Git, Python 3.12, and Node.js 20.
+3. Plan to use the "No Desktop" path in the Power BI labs.
+
+</TabItem>
+</Tabs>
+
+**You should see:** an OS version you can support for the whole track. On Windows, note the version in case you need to open a help desk ticket.
+
+<Checkpoint lab="00" step="1" />
+
+### Step 2. Install PowerShell 7
+
+Run the installer yourself. Nothing on this page installs automatically.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+winget install --id Microsoft.PowerShell --source winget
+pwsh -NoLogo -NoProfile -Command "$PSVersionTable.PSVersion"
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+# Install PowerShell 7 from the official package, or use your approved package manager.
+pwsh -NoLogo -NoProfile -Command '$PSVersionTable.PSVersion'
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** version `7.4` or later. The prompt or terminal title should say `pwsh`, not Windows PowerShell.
+
+<RepoFile path="scripts/Test-Prerequisites.ps1" lines="35-43" />
+
+<Checkpoint lab="00" step="2" />
+
+### Step 3. Install Git and enable long paths
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+winget install --id Git.Git --source winget
+git --version
+git config --global core.longpaths true
+git config --global --get core.longpaths
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+# Install Git from git-scm.com, Xcode Command Line Tools, or your approved package manager.
+git --version
+```
+
+</TabItem>
+</Tabs>
+
+Leave line endings to the repo's `.gitattributes`. Don't set a global autocrlf rule just for this lab.
+
+**You should see:** Git `2.40` or later. On Windows, the final command prints `true`.
+
+<Checkpoint lab="00" step="3" />
+
+### Step 4. Install Python 3.12
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+winget install --id Python.Python.3.12 --source winget
+py -3.12 --version
+python --version
+```
+
+If `python` opens the Microsoft Store instead of printing a version, turn off the Store aliases under **Settings > Apps > Advanced app settings > App execution aliases**.
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+# Install Python 3.12 or later from python.org or your approved package manager.
+python3 --version
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** Python `3.12` or later. In [Lab 01](/labs/01-get-your-copy/#step-4), the repo script creates `.venv` from this install.
+
+<Checkpoint lab="00" step="4" />
+
+### Step 5. Install Node.js 20 or later
+
+Node is used by the local lab site and by MCP servers launched with `npx`.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+winget install --id OpenJS.NodeJS.LTS --source winget
+node --version
+npm --version
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+# Install the current Node.js LTS from nodejs.org or your approved package manager.
+node --version
+npm --version
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** Node.js `v20` or later and an npm version. Reopen your terminal if the command isn't found after install.
+
+<Checkpoint lab="00" step="5" />
+
+### Step 6. Install VS Code and sign in to Copilot
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+winget install --id Microsoft.VisualStudioCode --source winget
+code --version
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+# Install VS Code from code.visualstudio.com.
+code --version
+```
+
+</TabItem>
+</Tabs>
+
+Then configure the UI:
+
+1. Open VS Code.
+2. Open the Command Palette: **Ctrl+Shift+P** (macOS: **Cmd+Shift+P**), or **View > Command Palette**.
+3. Run **Shell Command: Install 'code' command in PATH** if `code --version` failed.
+4. Select **Accounts** in the Activity Bar, then **Sign in to Sync Settings** or **Sign in with GitHub**.
+5. Open Copilot Chat: **Ctrl+Alt+I** (macOS: **Ctrl+Cmd+I**), or **View > Chat**.
+6. Confirm the mode menu in the chat input includes **Agent** or **Agent mode**.
+
+**You should see:** VS Code on PATH, Copilot Chat opens, and your GitHub account is signed in.
+
+<Checkpoint lab="00" step="6" />
+
+### Step 7. Install Power BI Desktop and enable project previews
+
+<PlatformBadge kind="windows-only" /> <PlatformBadge kind="preview" />
+
+```powershell
+winget install --id Microsoft.PowerBI --source winget
+```
+
+If your company blocks `winget` or the Store, use your managed software catalog and ask for **Power BI Desktop**, not the Power BI service.
+
+After install:
+
+1. Open **Power BI Desktop**.
+2. Go to **File > Options and settings > Options > Preview features**.
+3. Enable **Power BI Project (.pbip) save option** if it appears.
+4. Enable **Store semantic model using TMDL format** if it appears.
+5. Select **OK**, close Desktop, and reopen it.
+
+<RepoFile path="fabric/README.md" lines="10-17" />
+
+**You should see:** Power BI Desktop starts, and the PBIP and TMDL preview options are either enabled or absent because your Desktop version has them on by default.
+
+<Aside type="note" title="No Desktop on macOS">
+Power BI Desktop is Windows only. You can still do the file-mode parts of the lab on macOS and read the TMDL and PBIR files in VS Code.
+</Aside>
+
+<Checkpoint lab="00" step="7" />
+
+### Step 8. Install GitHub CLI and Copilot CLI
+
+GitHub CLI is optional until Labs 12 and 13. Copilot CLI is used in Lab 11.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+winget install --id GitHub.cli --source winget
+gh --version
+npm install -g @github/copilot
+copilot --version
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+# Install GitHub CLI with the official installer or your approved package manager.
+gh --version
+npm install -g @github/copilot
+copilot --version
+```
+
+</TabItem>
+</Tabs>
+
+Then sign in:
+
+```powershell
+gh auth login
+copilot
+```
+
+**You should see:** `gh auth login` completes for GitHub.com, and `copilot` starts an authenticated CLI session or prints a sign-in URL.
+
+<Checkpoint lab="00" step="8" />
+
+### Step 9. Check your Copilot plan and organization policies
+
+<PlatformBadge kind="paid-plan" />
+
+1. Open GitHub in a browser.
+2. Go to **Settings > Copilot** for your personal account, or ask your organization owner to check **Organization settings > Copilot > Policies**.
+3. Confirm these features are allowed for this repo or organization:
+   - Copilot Chat in VS Code.
+   - Agent mode in the IDE.
+   - Custom agents, prompt files, and instructions.
+   - MCP servers in Copilot.
+   - Copilot CLI.
+   - Copilot code review for Lab 12.
+   - Copilot cloud agent for Lab 13.
+4. If you're on Copilot Business or Enterprise, ask whether policy, firewall, or data loss prevention rules block MCP servers, hooks, or package downloads.
+
+**You should see:** enough access for your chosen track. If your admin won't enable code review or cloud agent, you can still finish the Core track through Lab 11.
+
+<Checkpoint lab="00" step="9" />
+
+## Verify your work
+
+You can't run the automated check yet, because it lives in the repo you clone in [Lab 01](/labs/01-get-your-copy/). After cloning, run this from the repo root. It calls `scripts/Test-Prerequisites.ps1`, which checks PowerShell, Git, Python, VS Code, Power BI Desktop on Windows, Node.js, GitHub CLI, and Copilot CLI.
+
+<VerifyStep lab="00" />
+
+## Troubleshooting
+
+<details>
+<summary>`winget` isn't recognized</summary>
+
+Install **App Installer** from the Microsoft Store, use your company's software catalog, or download the official installer from the product site. On managed devices, `winget` may be disabled by policy.
+
+</details>
+
+<details>
+<summary>PowerShell still opens as Windows PowerShell 5.1</summary>
+
+Open **PowerShell 7** from the Start menu, or set your terminal profile to PowerShell 7 under **Windows Terminal > Settings > Startup > Default profile**. The command must be `pwsh`, not `powershell`.
+
+</details>
+
+<details>
+<summary>`python` opens the Microsoft Store</summary>
+
+Turn off the Store aliases under **Settings > Apps > Advanced app settings > App execution aliases**. Then open a new terminal and run `py -3.12 --version`.
+
+</details>
+
+<details>
+<summary>Copilot Chat opens, but Agent mode is missing</summary>
+
+Update VS Code, sign in again, and confirm your Copilot plan allows agents. In organizations, an admin may need to enable agent mode or related Copilot policy settings.
+
+</details>
+
+<details>
+<summary>Power BI Desktop preview settings are missing</summary>
+
+Preview names move between Desktop versions. If the PBIP or TMDL options are missing, try opening the PBIP in Lab 02. If it opens as a project with TMDL files, your Desktop version already has the feature enabled.
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="Why does this lab use PowerShell 7 instead of Windows PowerShell 5.1?"
+	options={[
+		'The scripts use PowerShell 7 behavior and run the same way on Windows and macOS.',
+		'Power BI Desktop can only be launched from PowerShell 7.',
+		'Git refuses to clone PBIP files from Windows PowerShell 5.1.',
+	]}
+	answer={0}
+	explanation="The scripts declare PowerShell 7 and use cross-platform behavior. Desktop is Windows only, but the scripts themselves also run under pwsh on macOS."
+/>
+
+<KnowledgeCheck
+	question="Which step actually installs system software?"
+	options={[
+		'The VerifyStep component installs missing tools.',
+		'Only the commands you run yourself install software.',
+		'Initialize-DevEnvironment.ps1 installs Git, Python, and VS Code.',
+	]}
+	answer={1}
+	explanation="The repo scripts install Python packages inside .venv, but they do not install system tools. You run winget or official installers yourself."
+/>
+
+<KnowledgeCheck
+	question="Which features should a Business or Enterprise admin check before Labs 12 and 13?"
+	options={[
+		'Only GitHub Pages.',
+		'Copilot code review and Copilot cloud agent policies.',
+		'Only Dependabot alerts.',
+	]}
+	answer={1}
+	explanation="Labs 12 and 13 use paid Copilot features that can also be blocked by org policy. Check them before you need them."
+/>
+
+## Recap and next
+
+You installed the tools the lab expects, signed in to Copilot, enabled Power BI Desktop project support, and checked the policies that can block later labs. Next you create your own copy of the repo and run the real prerequisite check.
+
+<NextLab current="00" />
+
+## Go further
+
+- Save the installed versions in a note so you can compare them if a menu moves later.
+- If you're on a corporate device, open the help desk ticket now for Power BI Desktop, Copilot policy, MCP servers, `winget`, and package downloads.
+
+<FeedbackLink />

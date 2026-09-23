@@ -1,0 +1,57 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Lab: check prerequisites",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/scripts/Test-Prerequisites.ps1"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Lab: validate repository",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/scripts/Invoke-Validation.ps1"],
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Lab: check my progress",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/scripts/lab/Test-LabProgress.ps1", "-Lab", "${input:labNumber}"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Lab: model conventions",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/scripts/Test-ModelConventions.ps1"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Lab: report bindings",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/scripts/Test-ReportBindings.ps1"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Lab: preview the lab site",
+      "type": "shell",
+      "command": "pwsh",
+      "args": ["-NoProfile", "-File", "${workspaceFolder}/scripts/lab/Start-LabSite.ps1"],
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "labNumber",
+      "type": "promptString",
+      "description": "Lab number, for example 07",
+      "default": "01"
+    }
+  ]
+}

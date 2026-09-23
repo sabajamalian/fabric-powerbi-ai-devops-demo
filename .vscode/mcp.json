@@ -1,0 +1,21 @@
+{
+  // MCP servers for the Contoso Pharmacy lab. No secrets or tenant details belong in this file.
+  // Versions are pinned; update them deliberately and re-run Lab 04 after an update.
+  "servers": {
+    // Power BI Modeling MCP: connects to the model open in Power BI Desktop, or to the PBIP folder.
+    // If you installed the Power BI Modeling MCP VS Code extension instead, disable this entry so
+    // the tools don't appear twice.
+    "powerbi-modeling-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@microsoft/powerbi-modeling-mcp@0.5.0-beta.13", "--start"]
+    },
+    // Optional. Fabric MCP: Microsoft Fabric documentation and item definitions. Its docs tools
+    // work without a Fabric tenant. Start it from the MCP view only if you want it.
+    "fabric-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@microsoft/fabric-mcp@1.4.0", "server", "start", "--mode", "all"]
+    }
+  }
+}

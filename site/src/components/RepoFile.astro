@@ -1,0 +1,48 @@
+---
+import { Code } from '@astrojs/starlight/components';
+import { readRepoFile, repoUrl } from '../lib/repo';
+
+interface Props {
+	path: string;
+	/** Line range such as "10-24" (1-based, inclusive). */
+	lines?: string;
+	lang?: string;
+	title?: string;
+}
+const { path, lines, title } = Astro.props;
+const text = readRepoFile(path);
+let body = text.replace(/\n$/, '');
+let anchor = '';
+if (lines) {
+	const [start, end] = lines.split('-').map(Number);
+	const all = body.split('\n');
+	if (!start || start > all.length) throw new Error(`RepoFile: ${path} has no line ${start}.`);
+	body = all.slice(start - 1, end || start).join('\n');
+	anchor = `#L${start}${end ? `-L${end}` : ''}`;
+}
+const ext = path.split('.').pop()?.toLowerCase() ?? '';
+const langs: Record<string, string> = {
+	ps1: 'powershell',
+	psd1: 'powershell',
+	sh: 'bash',
+	py: 'python',
+	md: 'md',
+	yml: 'yaml',
+	yaml: 'yaml',
+	json: 'jsonc',
+	toml: 'toml',
+	dax: 'txt',
+	tmdl: 'txt',
+	pbism: 'json',
+	pbir: 'json',
+	pbip: 'json',
+};
+const lang = Astro.props.lang ?? langs[ext] ?? 'txt';
+---
+
+<div class="repo-file">
+	<Code code={body} lang={lang} title={title ?? (lines ? `${path} (lines ${lines})` : path)} />
+	<p class="repo-file-link not-content">
+		<a href={`${repoUrl}/blob/main/${path}${anchor}`}>View {path} on GitHub</a>
+	</p>
+</div>

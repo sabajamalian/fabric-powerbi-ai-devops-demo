@@ -1,0 +1,95 @@
+---
+title: "CI workflows"
+description: "The repository workflows, permissions, SHA pinning, Pages setup, Dependabot, secret scanning, and matching local checks."
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import RepoFile from '~/components/RepoFile.astro';
+
+## What runs without a Fabric tenant
+
+Everything in CI runs without a Fabric tenant. Validation uses source files, generated CSVs, Python checks, and the site build. Power BI Desktop and Fabric service access are not required.
+
+## `ci.yml`
+
+<RepoFile path=".github/workflows/ci.yml" />
+
+Jobs:
+
+| Job | Runs on | Purpose |
+|---|---|---|
+| `validate` | Matrix: `ubuntu-latest`, `windows-latest` | Python install, validation, lab checks, conventions, hooks, and repo checks. |
+| `site` | `ubuntu-latest` | Installs site dependencies, runs content checks, and builds the Starlight site. |
+| `dependency-review` | `ubuntu-latest`, pull requests only | Reviews dependency changes. |
+
+The workflow uses least-privilege permissions. The top-level workflow permission is `contents: read`.
+
+## SHA pinning
+
+Actions are pinned by SHA with comments that show the human-readable version. This keeps automation stable and reviewable.
+
+<RepoFile path=".github/workflows/ci.yml" lines="13-37" />
+
+## `pages.yml`
+
+<RepoFile path=".github/workflows/pages.yml" />
+
+Jobs:
+
+| Job | Purpose |
+|---|---|
+| `build` | Builds the site and uploads the Pages artifact when `LAB_SITE_ENABLED` is `true`. |
+| `deploy` | Deploys to GitHub Pages using the artifact from `build`. |
+
+One-time setup:
+
+1. Go to **Settings > Pages**.
+2. Set **Source** to **GitHub Actions**.
+3. Add repository variable `LAB_SITE_ENABLED=true`.
+
+If the variable is missing or false, Pages does not run.
+
+## `copilot-setup-steps.yml`
+
+<RepoFile path=".github/workflows/copilot-setup-steps.yml" />
+
+The job is named `copilot-setup-steps`. It prepares cloud agent sessions by installing Python dependencies and APM, then installing the pinned Skills for Fabric package.
+
+## Dependabot
+
+<RepoFile path=".github/dependabot.yml" />
+
+Dependabot watches GitHub Actions, site npm dependencies, and Python dependencies. Keep Dependabot pull requests small and let CI prove the lab still works.
+
+## Secret scanning and push protection
+
+Enable GitHub secret scanning and push protection on the repository. The lab should never need committed tokens, tenant secrets, or connection strings. MCP values should come from inputs, environment variables, or GitHub MCP secrets.
+
+## Local checks
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/Invoke-Validation.ps1 -Tests
+cd site
+npm run check
+npm run build
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/Invoke-Validation.ps1 -Tests
+cd site
+npm run check
+npm run build
+```
+
+</TabItem>
+</Tabs>
+
+<Aside type="note" title="For page writers">
+The page-writing brief asks writers to run only `node scripts/check-content.mjs` from `site/`. Do not run the full site build unless the task asks for it.
+</Aside>

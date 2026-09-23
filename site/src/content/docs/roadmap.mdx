@@ -1,0 +1,93 @@
+---
+title: Roadmap
+description: "Phase two ideas that are intentionally outside the current Contoso Pharmacy self-paced lab."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+
+This roadmap lists useful next work. These items are not in this lab. The current lab stays tenant-free, synthetic, and local-first.
+
+## Fabric workspaces and deployment
+
+Not in this lab:
+
+- Create Fabric workspaces for dev, test, and prod.
+- Connect workspaces to Git integration.
+- Use Fabric deployment pipelines for staged promotion.
+- Evaluate `fabric-cicd` or Fabric REST API automation for deployment.
+- Add GitHub environments, approvals, and OIDC for deployment workflows.
+
+Microsoft Learn describes Fabric deployment pipelines and Fabric Git automation as ALM options. Product support and preview status can change, so this work needs a dated design when phase two starts.
+
+## Power BI Copilot and Fabric data agents
+
+Not in this lab:
+
+- Publish the semantic model to a Fabric workspace.
+- Enable Fabric Copilot for Power BI in a tenant and capacity.
+- Test Power BI Copilot against the published model.
+- Create a Fabric data agent over the semantic model.
+- Compare local question-tester answers with Fabric data agent answers.
+
+As of the docs checked on 2026-09-23, Fabric data agents can use Power BI semantic models as sources and require paid Fabric or Premium capacity. This lab avoids that requirement.
+
+## Fabric ontology
+
+<PlatformBadge kind="preview" />
+
+Not in this lab:
+
+- Model Contoso Pharmacy concepts in Fabric ontology, part of Fabric IQ preview.
+- Bind ontology entities to OneLake or semantic model sources.
+- Test whether ontology context improves data agent grounding.
+
+This is a phase two research item because ontology is a governed business context layer, not a repo-only TMDL change.
+
+## Monitoring and evaluation at scale
+
+Not in this lab:
+
+- Store repeated agent answer runs in a central evaluation store.
+- Track regressions over time by model version, prompt version, and agent version.
+- Add dashboards for answer quality, validation failures, PR cycle time, and Copilot review findings.
+- Add human adjudication workflows for ambiguous business questions.
+
+The current lab uses local JSON run files and deterministic grading so learners can understand the pattern first.
+
+## Governance
+
+Not in this lab:
+
+- Sensitivity labels and data loss prevention policies.
+- Endorsement, certification, and ownership workflows.
+- Lineage across workspaces and downstream reports.
+- Tenant settings for Copilot, cross-geo AI processing, and data agents.
+- Environment-specific secrets, approvals, and audit logging.
+
+These topics need an organization's real governance model and should not be simulated with fake tenant IDs.
+
+## Lab-site enhancements
+
+Planned improvements for the public site:
+
+- Add screenshots captured on Windows 11 with synthetic data only.
+- Add short recordings for the presenter path.
+- Add accessibility tests for keyboard navigation, contrast, headings, and screen-reader labels.
+- Run a weekly link check against GitHub, VS Code, Microsoft Learn, and APM docs.
+- Add a release note when product UI labels change.
+- Add a Windows full-track `lastVerified` date after a clean end-to-end run.
+
+## Repo and agent improvements
+
+Possible future repo work:
+
+- More model defects for advanced labs, such as calculation groups and role-playing dates.
+- A richer measure-review agent that checks DAX style and performance.
+- A package-ready APM example for one skill, one agent, and one prompt.
+- More sample cloud-agent PRs for facilitator fallback.
+- Better diff annotations for PBIR visual rebinding.
+
+<Aside type="note" title="Keep phase two separate">
+The current lab is valuable because it has no Fabric tenant dependency. Add deployment, Fabric Copilot, data agents, ontology, and governance as a separate track so the base lab remains easy to run.
+</Aside>

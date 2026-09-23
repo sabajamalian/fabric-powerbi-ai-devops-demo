@@ -1,0 +1,29 @@
+---
+title: My progress
+description: See which lab steps you've ticked off, get the next lab for your track, and export, import, or reset your progress.
+---
+
+import ProgressSummary from '~/components/ProgressSummary.astro';
+import TrackPicker from '~/components/TrackPicker.astro';
+
+Your progress is the tick boxes you've checked at the end of each step. It's stored in this browser's local storage under keys that start with `cpdemo.v1.`, and nothing is sent anywhere. Clearing your browser data clears it too, so export it if you switch machines.
+
+## Your labs
+
+<ProgressSummary />
+
+Labs that aren't on your track are dimmed. Ticking boxes is for you; the lab's verify command is what actually checks your work.
+
+## Your track
+
+<TrackPicker />
+
+## What's stored
+
+| Key | Value |
+|---|---|
+| `cpdemo.v1.<lab>.<step>` | `1` when you tick a step |
+| `cpdemo.v1.track` | `full`, `core`, `customization`, or `presenter` |
+| `starlight-synced-tabs__os` | Your last Windows or macOS tab choice (set by the site framework) |
+
+Reset clears the `cpdemo.v1.` keys. It doesn't touch your repo or anything on GitHub.

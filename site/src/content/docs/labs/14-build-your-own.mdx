@@ -1,0 +1,456 @@
+---
+title: "Lab 14: Build your own agent, skill, and prompt"
+description: "Create a measure-documenter skill, custom agent, and prompt file, then validate and share the skill pattern with APM."
+sidebar:
+  label: "14. Build your own"
+lab:
+  number: 14
+  durationMinutes: 45
+  level: advanced
+  platforms: [windows, macos-file-mode]
+  requiresDesktop: false
+  surfaces: [vscode, cli]
+  primitives: [skill, custom-agent, handoff, prompt-file, apm]
+  startCheckpoint: lab09-complete
+  endCheckpoint: lab09-complete
+---
+
+import { Aside, Tabs, TabItem, FileTree } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import WhatVaries from '~/components/WhatVaries.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+By now you've used repo instructions, skills, agents, prompts, hooks, MCP, CLI, code review, and the cloud agent. This lab turns that into a repeatable pattern you can use in your own repo. You build a `measure-documenter` capability that finds weak measure descriptions and rewrites them in the Contoso house style. You create three different customization types on purpose, because each one solves a different problem.
+
+The files you create are learner files. Copying full file contents is the right move here, because the lab check verifies that new customization files exist and have valid frontmatter.
+
+## Concepts
+
+- **Skill:** reusable task knowledge in a folder. Use it when the agent should decide when to load extra workflow guidance and supporting references. See [Skills](/reference/skills/).
+- **Custom agent:** a role with a tool list, body instructions, and optional handoffs. Use it when you want a named persona and a safer tool boundary. See [Agents](/reference/agents/).
+- **Prompt file:** a saved slash command. Use it when you want to run the same task on demand with a predictable entry point. See [Prompts](/reference/prompts/).
+- **Instructions:** always-on or file-scoped guidance. Use instructions for standards that should apply broadly, not for a one-off workflow.
+- **APM:** a package manager for agent context. In this repo, APM installs external skills into `.agents/skills/`. To share one project skill from this repo, another repo installs the subdirectory path.
+
+## Before you begin
+
+- You finished [Lab 13](/labs/13-cloud-agent/) or restored `lab09-complete`.
+- VS Code is open at the repository root. If you opened only `site/` or `fabric/`, workspace customizations may not appear.
+- You can create files in `.github/skills/`, `.github/agents/`, and `.github/prompts/`.
+- The validation environment from [Lab 01](/labs/01-get-your-copy/#step-4) exists.
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Choose the right customization type
+
+Before you create files, map the job to the customization type.
+
+| Need | Use | Why |
+|---|---|---|
+| House style for measure descriptions | Skill | It includes instructions and a reference file. The model can load it only when the task asks about measure documentation. |
+| A named worker that can edit measures | Custom agent | It has `read`, `edit`, `search`, and `execute`, plus a handoff to `model-reviewer`. |
+| A repeatable command to run the workflow | Prompt file | You invoke `/document-measures` when you want this exact pass. |
+| Broad rule for every file | Instructions | Not needed here, because this is a focused workflow. |
+
+You can create these through VS Code's Agent Customizations editor: open Chat, select the **Configure Chat** gear, or run **Chat: Open Customizations** from the Command Palette (**Ctrl+Shift+P**, macOS: **Cmd+Shift+P**). From there, use **New Skill (Workspace)**, **New Agent (Workspace)**, or **New Prompt (Workspace)**. You can also run **Chat: New Custom Agent** or **Chat: New Prompt File** directly from the Command Palette. If the **Chat: New Skill** command isn't in your VS Code build, use the Customizations editor or create the folder manually.
+
+**You should see:** a clear split: skill for reusable knowledge, agent for the role and tools, prompt for the slash command.
+
+<Checkpoint lab="14" step="1" />
+
+### Step 2. Create the measure-documentation skill
+
+Create this folder and files:
+
+<FileTree>
+
+- .github/
+  - skills/
+    - measure-documentation/
+      - SKILL.md
+      - references/
+        - style.md
+
+</FileTree>
+
+Create `.github/skills/measure-documentation/SKILL.md` with this content:
+
+```markdown
+---
+name: measure-documentation
+description: Write and improve descriptions for Power BI semantic model measures in the Contoso Pharmacy model. Use when asked to find undocumented measures, rewrite measure descriptions, or document DAX measures in TMDL.
+---
+# Measure documentation skill
+
+Use this skill when the task is to find measures with missing, vague, or inconsistent descriptions and rewrite them to the house style.
+
+**Inputs**
+
+- Semantic model files under `fabric/ContosoPharmacy.SemanticModel/definition/`.
+- The style guide in [references/style.md](references/style.md).
+- Existing model conventions from `.github/skills/pharmacy-model-conventions/` when they are relevant.
+
+**Workflow**
+
+1. Search TMDL table files for `measure` blocks.
+2. List measures that have no `///` description, a description under 20 characters, or a vague description such as "calculated measure".
+3. Read the DAX expression before editing the description.
+4. Write one plain-language sentence that explains the business meaning, not the implementation.
+5. Keep DAX, format strings, display folders, and lineage tags unchanged unless the user explicitly asks for a model fix.
+6. Run `pwsh ./scripts/Invoke-Validation.ps1 -Only tmdl,customizations` after edits.
+
+**Output**
+
+Summarize each changed measure as `Table[Measure]`, old description, new description, and validation result.
+```
+
+Create `.github/skills/measure-documentation/references/style.md` with this content:
+
+```markdown
+# Measure description style
+
+A measure description is for analysts and AI tools. It should help someone decide whether to use the measure.
+
+**Rules**
+
+- Start with the business outcome, not the DAX function.
+- Use one sentence, usually 12 to 25 words.
+- Name the grain or time window when it matters.
+- Mention filters only when they change the meaning.
+- Avoid implementation words such as `SUMX`, `CALCULATE`, table names, and source column names.
+- Avoid vague descriptions such as "calculated value", "measure for dashboard", or "total metric".
+- Do not mention real patients, prescribers, members, or customers.
+
+**Examples**
+
+| Measure | Strong description |
+|---|---|
+| Total Fills | Counts prescription fill events in the selected period and filter context. |
+| Refill Rate | Shows the share of fills that are refills in the selected period. |
+| Average Processing Minutes | Averages the time from prescription intake to completed fill for selected fills. |
+```
+
+The Lab 14 check looks for any new skill folder not listed as shipped in `lab/checks.yaml`. It then checks that `SKILL.md` has frontmatter, that `name` matches the folder, and that `description` is present. The repo-wide customization check also enforces lowercase hyphenated names and description length.
+
+**You should see:** `SKILL.md` and `references/style.md` under `.github/skills/measure-documentation/`. The skill frontmatter name is exactly `measure-documentation`.
+
+<WhatVaries mustMatch={['.github/skills/measure-documentation/SKILL.md exists', 'name: measure-documentation matches the folder', 'description explains when to use the skill']}>
+You may create the files by hand, through the Agent Customizations editor, or with a VS Code command. The file contents must end up the same.
+</WhatVaries>
+
+<Checkpoint lab="14" step="2" />
+
+### Step 3. Create the measure-documenter agent
+
+Create `.github/agents/measure-documenter.agent.md` with this content:
+
+````markdown
+---
+name: measure-documenter
+description: Finds weak Power BI measure descriptions, rewrites them using the measure-documentation skill, validates the model, and hands the result to model-reviewer.
+argument-hint: Optional scope, such as "core measures only" or "Prescription Fill measures"
+tools: ['read', 'edit', 'search', 'execute']
+handoffs:
+  - label: Review measure documentation
+    agent: model-reviewer
+    prompt: Review the measure description changes on this branch against main. Focus on business clarity, TMDL safety, and validation results.
+    send: false
+---
+# Measure documenter
+
+You improve measure descriptions in the Contoso Pharmacy Power BI semantic model.
+
+**Before editing**
+
+1. Load the `measure-documentation` skill.
+2. Read `.github/skills/measure-documentation/references/style.md`.
+3. Inspect the current branch with `git branch --show-current`. If it is `main`, ask the user to create a feature branch before edits.
+4. Search under `fabric/ContosoPharmacy.SemanticModel/definition/tables/` for measure blocks.
+
+**Editing rules**
+
+- Edit only TMDL descriptions for measures unless the user explicitly asks for more.
+- Do not change DAX expressions, lineage tags, format strings, display folders, relationships, data files, or expected answers.
+- Write one concise business sentence for each changed measure.
+- Preserve tabs and TMDL indentation.
+
+**Validation**
+
+Run this after edits:
+
+```powershell
+pwsh ./scripts/Invoke-Validation.ps1 -Only tmdl,customizations
+```
+
+If validation fails, fix only issues caused by your changes.
+
+**Response**
+
+Return a short table with measure, old description, new description, and validation status. Offer the handoff to `model-reviewer`.
+````
+
+The Lab 14 check looks for a new `.github/agents/*.agent.md` file whose frontmatter has `description` and `tools`. The customizations validation also checks handoff targets, so the handoff points at the existing `model-reviewer` agent.
+
+**You should see:** `measure-documenter` in the agent picker after VS Code reloads customizations. If it doesn't appear, run **Developer: Reload Window** from the Command Palette or use **Chat: Open Customizations** and check the **Agents** tab.
+
+<WhatVaries mustMatch={['.github/agents/measure-documenter.agent.md exists', 'tools includes read, edit, search, and execute', 'handoff target is model-reviewer']}>
+Your VS Code build may show the agent under workspace customizations or in the agent picker directly. The file is the source of truth.
+</WhatVaries>
+
+<Checkpoint lab="14" step="3" />
+
+### Step 4. Create the document-measures prompt
+
+Create `.github/prompts/document-measures.prompt.md` with this content:
+
+```markdown
+---
+name: document-measures
+description: Find weak Contoso Pharmacy measure descriptions, rewrite them to the house style, and validate the TMDL.
+agent: measure-documenter
+argument-hint: Optional scope, for example "core measures only"
+---
+Document measures in the Contoso Pharmacy semantic model.
+
+Scope from the user, if provided:
+
+${input:scope:All measures unless I name a table or measure}
+
+Follow this workflow:
+
+1. Use the `measure-documentation` skill.
+2. Search `fabric/ContosoPharmacy.SemanticModel/definition/tables/` for measures.
+3. Identify measures whose descriptions are missing, vague, or inconsistent with the style guide.
+4. Rewrite only the `///` description lines for those measures.
+5. Keep DAX expressions, lineage tags, format strings, display folders, and relationships unchanged.
+6. Run `pwsh ./scripts/Invoke-Validation.ps1 -Only tmdl,customizations`.
+7. Summarize changed measures and validation.
+```
+
+The Lab 14 prompt check looks for a new `.github/prompts/*.prompt.md` file whose frontmatter has a `description`. The repo validation also checks that `agent: measure-documenter` matches an existing custom agent.
+
+**You should see:** `/document-measures` in the slash command menu after customizations reload. You can also run **Chat: Run Prompt** from the Command Palette and pick `document-measures`.
+
+<Checkpoint lab="14" step="4" />
+
+### Step 5. Validate customizations
+
+Run the customization validation. This is the smallest validation command for the files you created.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/Invoke-Validation.ps1 -Only customizations
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/Invoke-Validation.ps1 -Only customizations
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** `PASS  customizations`.
+
+If it fails, read the file path in the message. Common failures are a skill name that doesn't match the folder, a description missing from frontmatter, a handoff target that doesn't exist, or a prompt `agent` value that doesn't match a built-in or custom agent.
+
+<Checkpoint lab="14" step="5" />
+
+### Step 6. Test the workflow on a small diff
+
+Make a tiny, reversible test so you can see the agent use your files.
+
+1. Create a branch:
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git switch -c feature/measure-documenter
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git switch -c feature/measure-documenter
+```
+
+</TabItem>
+</Tabs>
+
+2. Open a TMDL table with measures, for example a table under `fabric/ContosoPharmacy.SemanticModel/definition/tables/`.
+3. Change one measure description to `/// TODO`.
+4. Open Copilot Chat and choose **measure-documenter** from the agent picker.
+5. Run `/document-measures only the measure I changed to TODO`.
+6. Approve the validation command after you read it.
+
+**You should see:** the agent load the `measure-documentation` skill, replace only the weak description, run `Invoke-Validation.ps1 -Only tmdl,customizations`, and offer the **Review measure documentation** handoff.
+
+<Aside type="caution" title="Keep the test small">
+Do not ask the agent to rewrite every measure unless you want to review every description. This lab is about creating the customization layer, not changing the semantic model at scale.
+</Aside>
+
+<Checkpoint lab="14" step="6" />
+
+### Step 7. Share the skill pattern with APM
+
+This repo's committed skills stay in `.github/skills/`. You don't export them through this repo's `apm.yml`. If another repo wants just this skill, install the subdirectory path from your GitHub repo.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+irm https://aka.ms/apm-windows | iex
+apm --version
+apm install <your-github-user>/<your-repo>/.github/skills/measure-documentation
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+brew install apm
+apm --version
+apm install <your-github-user>/<your-repo>/.github/skills/measure-documentation
+```
+
+</TabItem>
+</Tabs>
+
+Use the subdirectory path. Do not add a `--skill` flag for this lab's share flow. The installed repo records the source in its own APM files, and the skill lands in the target that APM resolves for that repo.
+
+**You should see:** APM resolve the subdirectory package and install the skill into the target repo's agent customization location.
+
+<Checkpoint lab="14" step="7" />
+
+### Step 8. Commit the customization files
+
+Review the files before you commit.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git status --short .github/skills/measure-documentation .github/agents/measure-documenter.agent.md .github/prompts/document-measures.prompt.md
+git add .github/skills/measure-documentation .github/agents/measure-documenter.agent.md .github/prompts/document-measures.prompt.md
+git commit -m "Add measure documenter customizations"
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git status --short .github/skills/measure-documentation .github/agents/measure-documenter.agent.md .github/prompts/document-measures.prompt.md
+git add .github/skills/measure-documentation .github/agents/measure-documenter.agent.md .github/prompts/document-measures.prompt.md
+git commit -m "Add measure documenter customizations"
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** one commit containing only the skill folder, the custom agent, and the prompt file.
+
+<Checkpoint lab="14" step="8" />
+
+## Verify your work
+
+<VerifyStep lab="14" />
+
+## Troubleshooting
+
+<details>
+<summary>The skill doesn't load or doesn't appear in slash commands</summary>
+
+Check `.github/skills/measure-documentation/SKILL.md`. The `name` must be lowercase words joined by hyphens, must match the folder, and must not contain a slash, colon, dot, or namespace prefix. Reload VS Code after fixing it.
+
+</details>
+
+<details>
+<summary>The agent is missing from the picker</summary>
+
+Make sure VS Code is open at the repo root, not a subfolder. Run **Chat: Open Customizations** and check the **Agents** tab. If you're in a monorepo-like folder view, enable `chat.useCustomizationsInParentRepositories` or open the repo root.
+
+</details>
+
+<details>
+<summary>Validation says the handoff target is not an agent</summary>
+
+The handoff target must be an existing built-in agent or a file in `.github/agents/`. Use `model-reviewer`, not a display label such as `Model Reviewer`.
+
+</details>
+
+<details>
+<summary>APM install docs mention a skill flag</summary>
+
+APM can install skill subsets in some package flows, but this lab uses a subdirectory install so another repo gets exactly `.github/skills/measure-documentation/`. Follow the command in step 7 for this lab.
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="When should you create a skill instead of a prompt file?"
+	options={[
+		'When you want reusable task knowledge that the agent can load when relevant.',
+		'When you only need a slash command that runs one saved prompt.',
+		'When you need to restrict the agent tool list.',
+	]}
+	answer={0}
+	explanation="A skill packages reusable instructions and references. A prompt file is the on-demand entry point, and a custom agent owns the tool list."
+/>
+
+<KnowledgeCheck
+	question="What does Lab 14 require in the custom agent frontmatter?"
+	options={[
+		'A model name and a schedule.',
+		'A description and a tools list.',
+		'A tenant ID and an MCP server secret.',
+	]}
+	answer={1}
+	explanation="The lab check looks for a new agent file with description and tools in frontmatter. No tenant or secret is used in this lab."
+/>
+
+<KnowledgeCheck
+	question="Why does the agent hand off to model-reviewer?"
+	options={[
+		'To make review a one-click next step after editing measure descriptions.',
+		'To let model-reviewer run with edit tools.',
+		'To package the skill for APM.',
+	]}
+	answer={0}
+	explanation="Handoffs guide the workflow from edit to review while preserving context. The reviewer remains a read-only review agent."
+/>
+
+## Recap and next
+
+You created a project skill with a reference file, a focused custom agent with tools and a handoff, and a prompt file that runs the workflow on demand. You validated the files with the repo's customization checks and learned how to share the skill with APM by installing a subdirectory.
+
+<NextLab current="14" />
+
+## Go further
+
+- Add examples for bad descriptions to `references/style.md`, then rerun `pwsh ./scripts/Invoke-Validation.ps1 -Only customizations`.
+- Create a read-only `measure-description-reviewer` agent that reports weak descriptions without editing.
+- Ask Copilot code review to review your customization PR and compare its feedback with `model-reviewer`.
+
+<FeedbackLink />

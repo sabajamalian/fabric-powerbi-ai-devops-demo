@@ -1,0 +1,288 @@
+---
+title: "Lab 02: Meet the baseline model"
+description: Open the baseline PBIP, inspect the intentional model defects, and map each issue to TMDL and PBIR files.
+sidebar:
+  label: "02. Baseline model"
+lab:
+  number: 2
+  durationMinutes: 30
+  level: intro
+  platforms: [windows, macos-file-mode]
+  requiresDesktop: false
+  surfaces: [desktop, vscode, cli]
+  primitives: [pbip, tmdl, pbir, baseline]
+  startCheckpoint: lab02-start
+  endCheckpoint: lab02-start
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+The baseline model is valid, but it is not friendly to people or AI tools. It uses source-system names, has weak relationships, leaves keys visible, and gives agents almost no definitions. You inspect those defects before asking Copilot to fix them later. Seeing the problems in both Desktop and text makes the rest of the lab feel concrete.
+
+## Concepts
+
+- **PBIP:** a Power BI Project saved as files so Git and agents can review changes. See [Architecture](/reference/architecture/).
+- **TMDL:** the text format for the semantic model under `fabric/ContosoPharmacy.SemanticModel/definition/`.
+- **PBIR:** the report format under `fabric/ContosoPharmacy.Report/definition/`, with one `visual.json` per visual.
+- **Relationship:** the TMDL link between model tables. Missing or bidirectional relationships can make answers wrong.
+- **DataFolderPath:** the Power Query parameter that points Desktop at the synthetic CSV folder.
+
+## Before you begin
+
+- Finish [Lab 01](/labs/01-get-your-copy/).
+- On Windows, Power BI Desktop is installed.
+- Close other Power BI Desktop files so you know which model the later checks find.
+- On macOS, use the "No Desktop" path in the steps.
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Link Desktop to the local data folder
+
+<PlatformBadge kind="windows-only" />
+
+Power BI Desktop reads the CSVs through a fixed path, `C:\ContosoPharmacyDemo\data\`. The script creates that path as a directory junction to this clone's `data\generated` folder.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/Set-LocalDataLink.ps1
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/Set-LocalDataLink.ps1
+```
+
+This prints a Windows-only skip message on macOS. That's expected.
+
+</TabItem>
+</Tabs>
+
+<RepoFile path="scripts/Set-LocalDataLink.ps1" lines="2-19" />
+
+**You should see:** `Linked C:\ContosoPharmacyDemo\data -> <your clone>\data\generated` on Windows. On macOS, you should see that the script has nothing to do.
+
+<Checkpoint lab="02" step="1" />
+
+### Step 2. Read how the model finds data
+
+Open `fabric/ContosoPharmacy.SemanticModel/definition/expressions.tmdl` in VS Code:
+
+- Keyboard: **Ctrl+P** (macOS: **Cmd+P**), type the file name, press **Enter**.
+- Command Palette: **Ctrl+Shift+P** (macOS: **Cmd+Shift+P**), run **File: Open File**, then pick the file.
+- Menu: **File > Open File**.
+
+<RepoFile path="fabric/ContosoPharmacy.SemanticModel/definition/expressions.tmdl" />
+
+That parameter is why the junction exists. It also keeps personal user paths out of the semantic model.
+
+**You should see:** `DataFolderPath` defaults to `C:\ContosoPharmacyDemo\data\` and is marked as a required text parameter.
+
+<Checkpoint lab="02" step="2" />
+
+### Step 3. Open the PBIP in Power BI Desktop
+
+<PlatformBadge kind="windows-only" />
+
+1. In File Explorer, open `fabric\ContosoPharmacy.pbip`.
+2. If Power BI Desktop asks whether to trust the project, select the safe option to open it from your local clone.
+3. If Desktop offers to upgrade or save the report format, don't save yet. You only inspect in this lab.
+4. On the **Home** ribbon, select **Refresh**.
+5. Open **Model view** from the left rail.
+
+<RepoFile path="fabric/README.md" lines="10-27" />
+
+**You should see:** an **Overview** report page, then a model with `dim_date`, `dim_store`, `dim_med`, and `fact_rx_fill` after refresh.
+
+<Aside type="note" title="No Desktop?">
+Skip the Desktop UI actions and read the TMDL and PBIR files in steps 4 and 6. You can still run the file-based checks on macOS.
+</Aside>
+
+<Checkpoint lab="02" step="3" />
+
+### Step 4. Find the baseline defects in the model
+
+In Desktop Model view, look for these issues. Then match each one to a repo file.
+
+1. Tables and columns use source names such as `fact_rx_fill`, `dim_store`, `rgn`, and `proc_mins`.
+2. `fact_rx_fill` has a relationship to Date and Store, but not to Medication.
+3. The Store relationship is bidirectional.
+4. Auto date/time is enabled.
+5. Numeric keys and helper columns summarize by sum.
+6. There are no descriptions or measures.
+
+The text files show the same defects:
+
+<RepoFile path="fabric/ContosoPharmacy.SemanticModel/definition/model.tmdl" lines="9-14" />
+
+<RepoFile path="fabric/ContosoPharmacy.SemanticModel/definition/relationships.tmdl" />
+
+<RepoFile path="fabric/ContosoPharmacy.SemanticModel/definition/tables/fact_rx_fill.tmdl" lines="1-78" />
+
+**You should see:** the missing Medication relationship, `crossFilteringBehavior: bothDirections`, `annotation __PBI_TimeIntelligenceEnabled = 1`, raw source names, and sum summarization on IDs and keys.
+
+<Checkpoint lab="02" step="4" />
+
+### Step 5. Confirm Desktop left `fabric/` clean
+
+Opening a PBIP can create local cache files. Those are ignored. It should not rewrite the model or report just because you opened it.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git status --short fabric
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git status --short fabric
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** no output. If you see changed files under `fabric/`, don't commit them yet. Read troubleshooting first.
+
+<Checkpoint lab="02" step="5" />
+
+### Step 6. Inspect the baseline report bindings
+
+The report already tells a useful story, but the visuals bind to the raw model names. Open the `visual.json` files under `fabric/ContosoPharmacy.Report/definition/pages/73b4ba6b5ea8b192ee63/visuals/`.
+
+<RepoFile path="fabric/ContosoPharmacy.Report/definition/pages/73b4ba6b5ea8b192ee63/visuals/5b930478ed94db246824/visual.json" lines="21-53" />
+
+<RepoFile path="fabric/ContosoPharmacy.Report/definition/pages/73b4ba6b5ea8b192ee63/visuals/94338098659bdb0fd362/visual.json" lines="21-49" />
+
+**You should see:** visuals refer to `dim_store.rgn`, `fact_rx_fill.fill_id`, and `Sum(fact_rx_fill.proc_mins)`. Later, when agents rename fields, these PBIR references must change too.
+
+<Checkpoint lab="02" step="6" />
+
+### Step 7. Write down five defects
+
+Create a short note outside the repo, or use a scratch note in your editor that you don't save into the repository. Capture at least five defects you saw. Use this list later when the model-assessor runs in [Lab 06](/labs/06-skills-and-assessor/).
+
+A good list includes:
+
+- Raw table and column names.
+- No descriptions.
+- Missing relationship to Medication.
+- Bidirectional Store relationship.
+- Auto date/time enabled.
+- Keys visible or summarized.
+- Processing minutes summed in the report.
+
+**You should see:** your own defect list. You don't need to commit anything.
+
+<Checkpoint lab="02" step="7" />
+
+## Verify your work
+
+<VerifyStep lab="02" />
+
+## Troubleshooting
+
+<details>
+<summary>Refresh says the folder or CSV files can't be found</summary>
+
+Run `pwsh ./scripts/Set-LocalDataLink.ps1` again and confirm it links `C:\ContosoPharmacyDemo\data` to this clone's `data\generated`. If you changed the model parameter, use **Home > Transform data > Edit parameters** and set it back.
+
+</details>
+
+<details>
+<summary>Power BI Desktop asks about privacy levels</summary>
+
+Choose settings that let Desktop read local files from your machine. The data is synthetic and local. Don't sign in to a Fabric workspace or publish anything for this lab.
+
+</details>
+
+<details>
+<summary>Desktop rewrote files under `fabric/`</summary>
+
+Close Desktop. If you only inspected the model, run `git restore fabric` to discard the rewrite. Later labs tell you when to keep Desktop-generated changes.
+
+</details>
+
+<details>
+<summary>The model opens as a single model file instead of TMDL</summary>
+
+Check **File > Options and settings > Options > Preview features** and enable the PBIP and TMDL options if they appear. Restart Desktop and open `fabric\ContosoPharmacy.pbip` again.
+
+</details>
+
+<details>
+<summary>On macOS, the Desktop check skips or fails</summary>
+
+That's expected. Power BI Desktop is Windows only. The file-mode checks still let you read the model and continue with labs that don't need Desktop.
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="Where is the missing Medication relationship visible in source control?"
+	options={[
+		'Only in the report theme file.',
+		'In relationships.tmdl, which has Date and Store relationships but no Medication relationship.',
+		'Only in data/generated/dim_med.csv.',
+	]}
+	answer={1}
+	explanation="Relationships live in relationships.tmdl. The baseline has Date and Store links only, and the Store link is bidirectional."
+/>
+
+<KnowledgeCheck
+	question="Why is editing TMDL while Desktop is open risky?"
+	options={[
+		'Desktop keeps a model in memory and can write it back over external file edits when you save or close.',
+		'TMDL files become read-only when Desktop opens them.',
+		'Git cannot diff TMDL files while Desktop is running.',
+	]}
+	answer={0}
+	explanation="Use MCP when Desktop is open, or close Desktop before editing the files directly. Otherwise Desktop can overwrite the agent's edits."
+/>
+
+<KnowledgeCheck
+	question="What does PBIR store for a visual field binding?"
+	options={[
+		'Only the display title shown on the canvas.',
+		'Table and field references such as Entity, Property, queryRef, and nativeQueryRef.',
+		'Only the CSV source column name.',
+	]}
+	answer={1}
+	explanation="PBIR visual.json files refer to model objects by name. Renames must update those references or the visual breaks."
+/>
+
+## Recap and next
+
+You opened or inspected the baseline PBIP, mapped the weak model to TMDL, saw report visuals bound to raw names, and confirmed that `fabric/` stayed clean. Next you learn how repository and path instructions shape Copilot's answers before any custom agent runs.
+
+<NextLab current="02" />
+
+## Go further
+
+- Run `pwsh ./scripts/Test-ModelConventions.ps1` and compare the findings with your five defects.
+- Open [Expected results](/present/expected-results/) and look at which business questions the baseline misses. Don't worry about memorizing answers.
+
+<FeedbackLink />

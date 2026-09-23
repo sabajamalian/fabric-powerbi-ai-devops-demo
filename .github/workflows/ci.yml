@@ -1,0 +1,114 @@
+# Tenant-free CI. Nothing here needs Fabric, Power BI, or any secret.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      # The same bootstrap a learner runs. It installs the hashed requirements and runs every
+      # validation step (data, expected, questions, runs, tmdl, bindings, customizations, hygiene).
+      - name: Initialize and validate
+        run: ./scripts/Initialize-DevEnvironment.ps1
+
+      - name: pytest
+        run: |
+          $python = $IsWindows ? '.venv/Scripts/python.exe' : '.venv/bin/python'
+          & $python -m pytest tools/python/tests
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - name: ruff
+        if: runner.os == 'Linux'
+        run: |
+          .venv/bin/python -m ruff check tools/python
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          .venv/bin/python -m ruff format --check tools/python
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - name: Pester
+        run: |
+          $pester = Get-Module -ListAvailable Pester | Sort-Object Version -Descending | Select-Object -First 1
+          if (-not $pester -or $pester.Version -lt [version]'5.5.0') {
+            Install-Module Pester -MinimumVersion 5.5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          }
+          Import-Module Pester -MinimumVersion 5.5.0
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'scripts/tests'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+      - name: PSScriptAnalyzer
+        run: |
+          if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {
+            Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+          }
+          $findings = Invoke-ScriptAnalyzer -Path scripts -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          $findings | Format-Table -AutoSize
+          if ($findings) { exit 1 }
+
+      # Warns instead of failing until the maintainer has pushed the checkpoint tags.
+      - name: Checkpoint tags
+        if: runner.os == 'Linux'
+        run: ./scripts/lab/Test-CheckpointTags.ps1 -AllowMissing
+
+  site:
+    name: Lab site build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check
+      - run: npm run build
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: moderate

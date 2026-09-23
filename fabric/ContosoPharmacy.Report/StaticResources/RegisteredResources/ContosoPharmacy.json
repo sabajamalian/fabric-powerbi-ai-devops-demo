@@ -1,0 +1,16 @@
+{
+  "name": "ContosoPharmacy.json",
+  "dataColors": [
+    "#0F6CBD",
+    "#C239B3",
+    "#107C10",
+    "#CA5010",
+    "#5C2E91",
+    "#038387",
+    "#986F0B",
+    "#4F6BED"
+  ],
+  "background": "#FFFFFF",
+  "foreground": "#242424",
+  "tableAccent": "#0F6CBD"
+}

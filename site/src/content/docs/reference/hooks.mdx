@@ -1,0 +1,125 @@
+---
+title: "Hooks"
+description: "How the lab's Copilot hooks deny unsafe actions, log sessions, and run TMDL lint after edits."
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import RepoFile from '~/components/RepoFile.astro';
+
+## What hooks do
+
+Hooks are deterministic guardrails. Instructions tell agents what they should do. Hooks decide what a tool call can do.
+
+This repo uses `.github/hooks/guardrails.json` for four events: `sessionStart`, `preToolUse`, `postToolUse`, and `sessionEnd`.
+
+<RepoFile path=".github/hooks/guardrails.json" />
+
+## Wrappers
+
+Windows uses PowerShell:
+
+<RepoFile path="scripts/hooks/run-hook.ps1" />
+
+macOS, Linux, and the cloud-compatible path use bash:
+
+<RepoFile path="scripts/hooks/run-hook.sh" />
+
+Both wrappers find the repo root, check for `.venv`, read JSON from stdin, and call `python -m pharmacy_demo --root <repo> hook <event>`. If `.venv` is missing, they warn and allow the call so a fresh clone still works.
+
+## Python implementation
+
+The implementation is `tools/python/pharmacy_demo/hooks.py`. It accepts both Copilot CLI style payloads (`toolName`, `toolArgs`) and snake_case payloads (`tool_name`, `tool_input`). Silence means "no opinion". It never emits an allow decision.
+
+<RepoFile path="tools/python/pharmacy_demo/hooks.py" lines="1-24" />
+
+## Denied edits
+
+| Path fragment | Why |
+|---|---|
+| `data/generated/` | Generated data. Change the generator and run `New-SyntheticData.ps1`. |
+| `evaluation/expected/` | Expected answers come from the DuckDB oracle. |
+| `/.pbi/cache.abf` | Power BI Desktop cache. |
+| `/.pbi/localSettings.json` | Desktop local settings. |
+| `.SemanticModel/Copilot/` | Desktop writes the Copilot folder. Draft in `fabric/ai-prep/`. |
+
+<RepoFile path="tools/python/pharmacy_demo/hooks.py" lines="29-49" />
+
+## Denied reads and commands for non-maintainers
+
+Without `CPDEMO_MAINTAINER=1`, the hook also blocks expected answers, `evaluation/questions.yaml`, model generator files, sample-answer files, and `pharmacy_demo dax-queries`. That keeps the `question-tester` from reading answers.
+
+<RepoFile path="tools/python/pharmacy_demo/hooks.py" lines="50-63" />
+
+Shell denials include force push, printing GitHub tokens, printing cloud access tokens, and changing global Git config. Destructive cleanup commands such as `git reset --hard` return an ask decision.
+
+<RepoFile path="tools/python/pharmacy_demo/hooks.py" lines="64-77" />
+
+## Post-edit lint
+
+After a tool edits a `.tmdl` file, the hook runs the TMDL linter. A clean edit logs `pass`. Errors are returned to the agent as additional context.
+
+<RepoFile path="tools/python/pharmacy_demo/hooks.py" lines="197-217" />
+
+The session log is `out/hooks/session.log` as JSON Lines.
+
+## Input and output JSON
+
+Accepted input shapes:
+
+```json
+{"toolName":"edit","toolArgs":{"file":"data/generated/dim_store.csv"}}
+```
+
+```json
+{"tool_name":"edit","tool_input":{"file_path":"data/generated/dim_store.csv"}}
+```
+
+Deny output includes both top-level fields and `hookSpecificOutput`:
+
+```json
+{
+  "permissionDecision": "deny",
+  "permissionDecisionReason": "data/generated/dim_store.csv: Generated data. Change tools/python/pharmacy_demo/datagen.py and run scripts/New-SyntheticData.ps1.",
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "deny",
+    "permissionDecisionReason": "data/generated/dim_store.csv: Generated data. Change tools/python/pharmacy_demo/datagen.py and run scripts/New-SyntheticData.ps1."
+  }
+}
+```
+
+## Test by hand
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+'{"toolName":"edit","toolArgs":{"file":"data/generated/dim_store.csv"}}' |
+  pwsh -NoProfile -File ./scripts/hooks/run-hook.ps1 -HookEvent pre-tool-use
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+printf '%s' '{"tool_name":"edit","tool_input":{"file_path":"data/generated/dim_store.csv"}}' |
+  ./scripts/hooks/run-hook.sh pre-tool-use
+```
+
+</TabItem>
+</Tabs>
+
+You should see a deny decision. If `.venv` is missing, you should see only the wrapper warning.
+
+## Surface support
+
+| Surface | Status |
+|---|---|
+| VS Code | Supported as preview hooks in `.github/hooks/*.json`. |
+| Copilot CLI | Supported by GitHub CLI docs. |
+| Copilot cloud agent | Check current docs and org policy. The repo has a Linux wrapper, but support can be preview gated. |
+| github.com chat | Not a hook surface. |
+
+<Aside type="caution" title="Hooks are preview">
+Keep hook commands small, deterministic, and easy to test by hand.
+</Aside>

@@ -1,0 +1,307 @@
+---
+title: "Lab 05: Your first custom agent: question-tester, before"
+description: "Run the question-tester agent against the baseline semantic model and save a graded local-baseline run."
+sidebar:
+  label: "05. question-tester, before"
+lab:
+  number: 5
+  durationMinutes: 30
+  level: intermediate
+  platforms: [windows, macos-file-mode]
+  requiresDesktop: false
+  surfaces: [vscode, desktop]
+  primitives: [custom-agent, prompt-file, skill, mcp, hook]
+  startCheckpoint: lab02-start
+  endCheckpoint: lab05-complete
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import WhatVaries from '~/components/WhatVaries.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+You need a baseline before an improvement means anything. The `question-tester` agent acts like an analyst's AI assistant: it reads the model, writes DAX, records assumptions, and saves answers in a schema the grader can score. The baseline model is intentionally weak, so a low score is not failure. It's evidence you can compare after the model becomes AI-ready.
+
+## Concepts
+
+- **Custom agent:** a `.github/agents/*.agent.md` file that defines an agent's purpose, tools, boundaries, and handoffs. See [Agents](/reference/agents/#question-tester).
+- **Prompt file:** a reusable chat task. `/answer-business-questions` passes a `label` input to the agent and tells it where to save the run. See [Prompts](/reference/prompts/).
+- **Evaluation run:** `evaluation/runs/<label>.json`, with one answer object per question and a `grade` block written by the grader.
+- **Expected-answer isolation:** the agent is told not to read expected answers, and the hook denies those reads for CLI and cloud-agent surfaces.
+- **Grader:** `scripts/Grade-QuestionRun.ps1` scores each answer 0, 1, or 2 against the deterministic expected answers.
+
+## Before you begin
+
+- You finished [Lab 04](/labs/04-connect-mcp/) and Power BI Modeling MCP can connect to the open Desktop model.
+- On Windows, `fabric\ContosoPharmacy.pbip` is open and refreshed in Power BI Desktop.
+- You are still on the baseline model. Do not run the improver agent yet.
+- If you do not have Desktop, use the catch-up path in step 6.
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Read the question-tester contract
+
+Open the custom agent file and read the frontmatter, tools, boundaries, and steps:
+
+<RepoFile path=".github/agents/question-tester.agent.md" />
+
+The important part is the boundary: the tester answers from the model as it is. It must not improve the model, and it must not read expected answers.
+
+**You should see:** `question-tester` has Power BI Modeling MCP tools, can write only the run file and comparison output, and must stop instead of inventing rows when Desktop or MCP is unavailable.
+
+<Checkpoint lab="05" step="1" />
+
+### Step 2. Confirm what keeps the test honest
+
+The skill repeats the rule, and the hook makes it deterministic outside VS Code's instruction-only path:
+
+<RepoFile path=".github/skills/business-question-evaluation/SKILL.md" lines="9-25" />
+
+<RepoFile path="tools/python/pharmacy_demo/hooks.py" lines="56-67" />
+
+<RepoFile path="tools/python/pharmacy_demo/hooks.py" lines="181-195" />
+
+In VS Code, the main protection is the agent instruction. In Copilot CLI and the cloud agent, the `pre-tool-use` hook denies file reads or commands that try to access `evaluation/expected/`, `evaluation/questions.yaml`, the sample generator, or `pharmacy_demo dax-queries`.
+
+**You should see:** the same forbidden paths in both the agent instructions and the hook. This is why the tester uses the public script instead of opening the YAML file directly.
+
+<Checkpoint lab="05" step="2" />
+
+### Step 3. List the public questions, not the answers
+
+Run the script the agent is allowed to use:
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/Get-BusinessQuestions.ps1
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/Get-BusinessQuestions.ps1
+```
+
+</TabItem>
+</Tabs>
+
+The script's help says it prints the five questions, paraphrases, and answer columns without reference answers:
+
+<RepoFile path="scripts/Get-BusinessQuestions.ps1" />
+
+**You should see:** Q01 to Q05, each with paraphrases and `answer_columns`. You should not see the expected rows, reference SQL, or reference DAX.
+
+<Checkpoint lab="05" step="3" />
+
+### Step 4. Run the prompt with the local-baseline label
+
+1. Open Copilot Chat: **Ctrl+Alt+I** (macOS: **Ctrl+Cmd+I**), or **View > Chat**.
+2. Switch to **Agent** mode.
+3. Pick **question-tester** from the agent dropdown.
+4. Type this prompt and press **Enter**:
+
+```text
+/answer-business-questions label=local-baseline
+```
+
+VS Code prompt files can also show an input box for `label`. This prompt declares the input as `${input:label:local-baseline or local-ai-ready}`:
+
+<RepoFile path=".github/prompts/answer-business-questions.prompt.md" />
+
+Approve read and DAX tool calls after you inspect them. Do not approve any model edit.
+
+**You should see:** the agent calls `Get-BusinessQuestions.ps1`, connects through Power BI Modeling MCP, runs one DAX query per question, and writes `evaluation/runs/local-baseline.json`. It then runs `Grade-QuestionRun.ps1 -Run local-baseline`.
+
+<WhatVaries mustMatch={['The run label is local-baseline', 'The file is evaluation/runs/local-baseline.json', 'The grade block is written by Grade-QuestionRun.ps1', 'The agent does not read evaluation/expected or evaluation/questions.yaml']}>
+Your exact DAX, assumptions, and scores can differ. The baseline model is ambiguous, so one run can earn a point differently from another.
+</WhatVaries>
+
+<Checkpoint lab="05" step="4" />
+
+### Step 5. Review and grade the run file
+
+Open `evaluation/runs/local-baseline.json` and compare it with the schema:
+
+<RepoFile path="evaluation/run.schema.json" />
+
+The skill reference explains the same shape in learner terms:
+
+<RepoFile path=".github/skills/business-question-evaluation/references/run-file.md" lines="1-42" />
+
+Run the grader yourself, even if the agent already did:
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/Grade-QuestionRun.ps1 -Run local-baseline
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 05
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/Grade-QuestionRun.ps1 -Run local-baseline
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 05
+```
+
+</TabItem>
+</Tabs>
+
+The grader owns the `grade` block:
+
+<RepoFile path="scripts/Grade-QuestionRun.ps1" />
+
+**You should see:** a total score out of 10, a `grade.by_question` object in the JSON file, and `PASS L05-baseline-run`. Typical baseline results are low on Q02, Q04, and Q05 because the model lacks the Medication relationship, explicit time-comparison measures, and business definitions.
+
+<Checkpoint lab="05" step="5" />
+
+### Step 6. Use the no-Desktop path when needed
+
+If you cannot run Desktop, restore the completed Lab 05 checkpoint. It seeds `evaluation/runs/local-baseline.json` from the committed sample run, then you grade it locally.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/lab/Restore-LabCheckpoint.ps1 -Checkpoint lab05-complete
+pwsh ./scripts/Grade-QuestionRun.ps1 -Run local-baseline
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 05
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/lab/Restore-LabCheckpoint.ps1 -Checkpoint lab05-complete
+pwsh ./scripts/Grade-QuestionRun.ps1 -Run local-baseline
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 05
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** the checkpoint creates or refreshes `evaluation/runs/local-baseline.json`, the grader writes the `grade` block, and the lab check passes. This path proves the evaluation pipeline without live DAX.
+
+<Checkpoint lab="05" step="6" />
+
+### Step 7. Compare your baseline with the committed sample
+
+Open the expected-results page for the sample scores, then read the rubric:
+
+<RepoFile path="evaluation/rubric.md" />
+
+The committed sample baseline scores 3 of 10, but your live run may differ by a point. What matters is the pattern: Q01 is usually easiest, Q02 fails because category filters do not reach the fact table, Q03 may sum minutes, Q04 lacks a definition of unusual refill activity, and Q05 lacks a previous-period measure.
+
+**You should see:** a concrete before score and recorded assumptions. Keep them. Labs 08 to 10 use them to prove the model improved.
+
+<Checkpoint lab="05" step="7" />
+
+## Verify your work
+
+<VerifyStep lab="05" />
+
+## Troubleshooting
+
+<details>
+<summary>The question-tester agent is missing from the picker</summary>
+
+Run **Developer: Reload Window** from **View > Command Palette**. If it still does not appear, open `.github/agents/question-tester.agent.md` and check for frontmatter errors. VS Code usually reports custom-agent parse errors in **View > Output**, then the **GitHub Copilot Chat** channel.
+
+</details>
+
+<details>
+<summary>The prompt asks me for a label even though I typed one inline</summary>
+
+Use `local-baseline` in the input box and continue. VS Code prompt input handling can vary by version. The prompt file's label input still resolves to the same run path.
+
+</details>
+
+<details>
+<summary>The run file fails schema validation</summary>
+
+Check that the top-level fields include `label`, `model_state`, `created`, and `answers`. Each answer needs `question_id` and `rows`. Do not hand-write the `grade` block. Run `pwsh ./scripts/Grade-QuestionRun.ps1 -Run local-baseline` after the shape is valid.
+
+</details>
+
+<details>
+<summary>The agent tries to read evaluation/questions.yaml or expected answers</summary>
+
+Stop the run and remind it: "Use only `pwsh ./scripts/Get-BusinessQuestions.ps1` for the questions. Do not read expected answers." In VS Code this is an instruction violation. In CLI and cloud-agent runs, the hook denies it.
+
+</details>
+
+<details>
+<summary>DAX tool calls fail or return no rows</summary>
+
+Go back to [Lab 04](/labs/04-connect-mcp/). Power BI Desktop must have `fabric\ContosoPharmacy.pbip` open and refreshed, the MCP server must be running, and the Power BI tools must be selected in **Configure Tools**.
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="Why does the question-tester use Get-BusinessQuestions.ps1 instead of opening evaluation/questions.yaml?"
+	options={[
+		'The script prints only the public question contract, while the YAML also contains reference answers.',
+		'The YAML file is not valid on Windows.',
+		'Copilot Chat cannot read YAML files.',
+	]}
+	answer={0}
+	explanation="The YAML contains hidden expected-answer material. The script exposes only question text, paraphrases, and output columns."
+/>
+
+<KnowledgeCheck
+	question="Who writes the grade block in a run file?"
+	options={[
+		'The question-tester agent writes it by hand after judging its own answers.',
+		'Grade-QuestionRun.ps1 writes it after validating the run.',
+		'Power BI Desktop writes it after running DAX.',
+	]}
+	answer={1}
+	explanation="The agent records answers and assumptions. The deterministic grader writes the grade block so results are comparable."
+/>
+
+<KnowledgeCheck
+	question="A low baseline score means what?"
+	options={[
+		'The lab failed and you should improve the model before saving the run.',
+		'The baseline model is hard for AI tools to use, which is the condition you are measuring.',
+		'The expected answers are probably wrong.',
+	]}
+	answer={1}
+	explanation="The baseline is intentionally weak. The low score gives you a before state to compare with the AI-ready model later."
+/>
+
+## Recap and next
+
+You ran your first repo custom agent, used a prompt-file input, saved a baseline evaluation run, and graded it. The run file now captures how the raw model performs before any AI-readiness fixes. Next you install a shared semantic-model authoring skill and ask a read-only assessor to explain what should change.
+
+<NextLab current="05" />
+
+## Go further
+
+- Run the question-tester a second time with `label=local-baseline-2` and compare the assumptions. Do not overwrite `local-baseline`.
+- Open [Business questions](/reference/business-questions/) after the run and compare the public contract with the hidden reference answers. Do this as a learner, not inside the tester agent.
+- Add a note to `evaluation/runs/local-baseline.json` explaining the model state and the Copilot model you used, then rerun the grader.
+
+<FeedbackLink />

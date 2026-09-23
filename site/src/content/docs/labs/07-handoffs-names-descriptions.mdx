@@ -1,0 +1,299 @@
+---
+title: "Lab 07: Handoffs, names, and descriptions"
+description: Hand the assessor's findings to the model-improver agent, rename the model to business names, add descriptions, and fix the report visuals the renames break.
+sidebar:
+  label: "07. Handoffs, names, descriptions"
+lab:
+  number: 7
+  durationMinutes: 45
+  level: intermediate
+  platforms: [windows, macos-file-mode]
+  requiresDesktop: false
+  surfaces: [vscode]
+  primitives: [custom-agent, handoff, prompt-file, skill, hook]
+  startCheckpoint: lab06-complete
+  endCheckpoint: lab07-complete
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import WhatVaries from '~/components/WhatVaries.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+A person reading `fact_rx_fill[proc_mins]` can guess what it means. An AI tool can't, and neither can a new analyst. Business names and one-line descriptions are the cheapest improvement you can make to a semantic model, and they're what Copilot, Q&A, and data agents read first. In this lab you let an agent do the tedious part, and you learn why renames in a model-as-code repo always need a second step: fixing the report that refers to the old names.
+
+## Concepts
+
+- **Handoff:** a button a custom agent shows after it answers. It switches the chat to another agent and pre-fills a prompt, so work moves along a chain (assess, improve, test, review) with context carried over. See [Copilot customization](/reference/copilot-customization/).
+- **Prompt file:** a reusable task you run with `/name` in chat. `/improve-names-and-descriptions` scopes this lab's work so the agent doesn't also add measures or change relationships. See [Prompts](/reference/prompts/).
+- **Skill loading:** the improver loads `pharmacy-model-conventions` (for the rename map), `tmdl-authoring` (for syntax), and `pbir-rebinding` (for the report). See [Skills](/reference/skills/).
+- **Lineage tag:** the stable ID Power BI uses to track an object across renames. It must not change when the name does.
+
+## Before you begin
+
+- You finished [Lab 06](/labs/06-skills-and-assessor/) and `out/assessment.md` exists.
+- The model-assessor chat from Lab 06 is still open, or you can reopen it from the chat history.
+- **Close Power BI Desktop.** The agent edits the `.tmdl` files directly in this lab. If Desktop has the project open, it can overwrite those edits when you save or close it.
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Create a feature branch
+
+The improver refuses to work on `main`, because every model change should arrive through a pull request (Lab 12).
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git switch -c feature/ai-ready-names
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git switch -c feature/ai-ready-names
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** `Switched to a new branch 'feature/ai-ready-names'`. The branch name also shows in the VS Code status bar, bottom left.
+
+<Checkpoint lab="07" step="1" />
+
+### Step 2. Hand off from the assessor
+
+1. Open Copilot Chat: **Ctrl+Alt+I** (macOS: **Ctrl+Cmd+I**), or **View > Chat**.
+2. Go back to the model-assessor conversation from Lab 06. If you closed it, open the chat history (the clock icon at the top of the Chat view) and pick it.
+3. Under the assessor's last answer, click **Fix these findings**.
+
+**You should see:** the agent picker switch to **model-improver**, and the chat input filled with "Fix the findings in out/assessment.md, highest severity first. Start with names and descriptions, and rebind the report after any rename." The prompt isn't sent yet, because the handoff has `send: false`. Don't send it. You'll use a narrower prompt in the next step.
+
+This is the handoff definition in the assessor's agent file:
+
+<RepoFile path=".github/agents/model-assessor.agent.md" lines="1-11" />
+
+<Aside type="tip" title="No handoff button?">
+Handoff buttons appear only in VS Code, only under the most recent answer from an agent that defines them. If you don't see it, pick **model-improver** from the agent dropdown at the bottom of the Chat view and continue.
+</Aside>
+
+<Checkpoint lab="07" step="2" />
+
+### Step 3. Rename to business names
+
+1. Clear the prefilled text in the chat input.
+2. Type `/improve-names-and-descriptions` and press **Enter**.
+3. When the agent asks whether Power BI Desktop has the project open, answer **No, it's closed**.
+4. Approve each terminal command it wants to run (**Continue** or **Allow**) after you read it. It runs only the validation and convention scripts.
+
+The prompt file limits the scope to names, descriptions, hidden keys, and summarization:
+
+<RepoFile path=".github/prompts/improve-names-and-descriptions.prompt.md" />
+
+**You should see:**
+
+- A todo list in the chat, built from `out/assessment.md`.
+- The skills it loaded listed under the answer (expand **Used n references**).
+- Edits to `fabric/ContosoPharmacy.SemanticModel/definition/tables/*.tmdl`, with table files renamed to match: `dim_date.tmdl` becomes `Date.tmdl`, `dim_store.tmdl` becomes `Store.tmdl`, `dim_med.tmdl` becomes `Medication.tmdl`, and `fact_rx_fill.tmdl` becomes `Prescription Fill.tmdl`.
+- Edits to `model.tmdl` and `relationships.tmdl` for the new table names.
+- A lint result after each edit, reported by the post-edit hook.
+
+The rename map comes from the conventions skill:
+
+<RepoFile path=".github/skills/pharmacy-model-conventions/references/data-dictionary.md" lines="1-12" />
+
+<WhatVaries mustMatch={['All four tables use the business names in the data dictionary', 'Every sourceColumn keeps its original value, for example sourceColumn: rgn', 'Test-ModelConventions.ps1 -Rule C01 reports 0 findings']}>
+The agent may rename one table at a time or all at once, and may ask you to confirm before renaming files.
+</WhatVaries>
+
+<Checkpoint lab="07" step="3" />
+
+### Step 4. Review descriptions, hidden keys, and summarization
+
+The same prompt continues with descriptions and column properties. When it finishes, review the diff before you accept it.
+
+1. Open **Source Control**: **Ctrl+Shift+G**, or **View > Source Control**.
+2. Click `Store.tmdl` to open the diff.
+3. Check these on at least one table:
+   - Every table and visible column has a `///` description line right above it, under 200 characters.
+   - `Store Key` has `isHidden` and `summarizeBy: none`.
+   - Numbers that aren't additive, such as `Year`, have `summarizeBy: none`.
+   - The `lineageTag:` line of each column is unchanged. The diff shows only the name line and new lines around it.
+4. Ask the agent about anything that looks wrong, for example "Why is Open Date not hidden?". It should point to the conventions skill.
+
+Then confirm with the convention check:
+
+```powershell
+pwsh ./scripts/Test-ModelConventions.ps1 -Rule C01,C02,C03,C04,C05
+```
+
+**You should see:** `0 finding(s)`.
+
+<Aside type="caution" title="If lineageTag changed">
+A changed `lineageTag` makes Power BI treat the column as new, which breaks anything built on the old one in the service. Ask the agent to restore the original tags from `git diff`, or discard that file's changes and run the prompt again.
+</Aside>
+
+<Checkpoint lab="07" step="4" />
+
+### Step 5. Run the TMDL lint
+
+The hook already ran the lint after each edit. Run it once yourself to see the whole model at once:
+
+```powershell
+pwsh ./scripts/Invoke-Validation.ps1 -Only tmdl
+```
+
+**You should see:** `PASS  tmdl`. If there are errors, each line names the file, line number, and a rule code such as `TMDL003`. Paste the output into the chat and ask the improver to fix it.
+
+<Checkpoint lab="07" step="5" />
+
+### Step 6. Fix the report bindings
+
+Report visuals refer to model objects by name. Renaming `dim_store` to `Store` in TMDL leaves every visual pointing at a table that no longer exists. The prompt asks the agent to rebind, but check it yourself:
+
+```powershell
+pwsh ./scripts/Test-ReportBindings.ps1
+```
+
+**You should see:** `PASS every report field exists in the model`.
+
+If it fails instead, it lists each `visual.json` file and the missing field, for example `Entity 'fact_rx_fill' not found`. Ask the improver: "Fix the report bindings listed by Test-ReportBindings.ps1." It loads the `pbir-rebinding` skill, which explains the three parts of a field reference that must agree:
+
+<RepoFile path=".github/skills/pbir-rebinding/SKILL.md" lines="17-40" />
+
+<Checkpoint lab="07" step="6" />
+
+### Step 7. Reopen the report in Desktop
+
+<PlatformBadge kind="windows-only" />
+
+1. Open `fabric\ContosoPharmacy.pbip` in Power BI Desktop.
+2. Click **Refresh** on the **Home** ribbon.
+3. Open the report page and check that every visual renders.
+4. In the **Data** pane, hover over a column. The tooltip shows its new description.
+
+**You should see:** tables named Date, Store, Medication, and Prescription Fill, and no visual with a red "Something's wrong with one or more fields" message.
+
+Close Desktop when you're done, without saving, so it doesn't rewrite the files before you commit.
+
+<Aside type="note" title="No Desktop?">
+Skip this step. The binding check in step 6 is the same test Desktop would fail on.
+</Aside>
+
+<Checkpoint lab="07" step="7" />
+
+### Step 8. Commit
+
+```powershell
+git add fabric
+git commit -m "Rename model objects and add descriptions"
+```
+
+**You should see:** a commit with the renamed table files and the report `visual.json` changes. `git status` then shows a clean tree, apart from `out/`, which is ignored.
+
+<Checkpoint lab="07" step="8" />
+
+## Verify your work
+
+<VerifyStep lab="07" />
+
+## Troubleshooting
+
+<details>
+<summary>My edits disappeared, or the files changed back</summary>
+
+Power BI Desktop had the project open while the agent edited the files, and it wrote its in-memory copy back when you saved or closed it. Close Desktop, run `git restore fabric` to go back to your last commit, and run `/improve-names-and-descriptions` again with Desktop closed.
+
+</details>
+
+<details>
+<summary>The agent renamed more than it should, or started adding measures</summary>
+
+Reject the extra changes in the diff (right-click the file in Source Control, then **Discard Changes**), and remind it of the scope: "Only names, descriptions, hidden keys, and summarization. No measures." The prompt file lists the scope, but agents sometimes read the whole assessment and try to do everything.
+
+</details>
+
+<details>
+<summary>Visuals are blank or show "Something's wrong with one or more fields"</summary>
+
+A visual still refers to an old name. Run `pwsh ./scripts/Test-ReportBindings.ps1`, then ask the improver to fix the files it lists. Reopen the project in Desktop afterward. Desktop doesn't reload PBIR files while it's open.
+
+</details>
+
+<details>
+<summary>The handoff button isn't there</summary>
+
+It appears only under the latest answer from the model-assessor, and only in VS Code. Pick **model-improver** from the agent dropdown instead. The handoff only saves you from typing the prompt.
+
+</details>
+
+<details>
+<summary>The lint reports TMDL001 or mixed indentation</summary>
+
+TMDL uses tabs. If you edited a file by hand, VS Code may have inserted spaces. The repo's `.vscode/settings.json` sets tabs for `.tmdl` files. Open the command palette (**Ctrl+Shift+P**), run **Convert Indentation to Tabs**, and save.
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="You rename the column rgn to Region in TMDL. What else has to change?"
+	options={[
+		'Nothing. Power BI tracks the column by lineageTag.',
+		'Every report visual, measure, and relationship that refers to the old name.',
+		'Only the sourceColumn property.',
+	]}
+	answer={1}
+	explanation="Report visuals and DAX refer to model objects by name. The lineageTag keeps identity in the service, but the PBIR files still say rgn until you rebind them. sourceColumn must stay rgn, because that's the column in the CSV."
+/>
+
+<KnowledgeCheck
+	question="Why close Power BI Desktop before an agent edits the TMDL files?"
+	options={[
+		'Desktop locks the files, so the edits fail.',
+		'Desktop keeps the model in memory and can write it back over the files, undoing the edits.',
+		'The agent needs Desktop closed to start Power BI Modeling MCP.',
+	]}
+	answer={1}
+	explanation="Desktop doesn't watch the files for outside changes. When you save or close it, it serializes its own copy of the model. Either edit through MCP while Desktop is open, or close Desktop and edit the files."
+/>
+
+<KnowledgeCheck
+	question="What does the handoff button do?"
+	options={[
+		'It runs the model-improver agent in the background and returns the result.',
+		'It switches the chat to model-improver and pre-fills a prompt, which you can edit before sending.',
+		'It opens a pull request with the assessor findings.',
+	]}
+	answer={1}
+	explanation="With send: false, the handoff switches agents and fills in the prompt, but waits for you. That gives you a chance to narrow the scope, as you did in step 3."
+/>
+
+## Recap and next
+
+You used a handoff to move from a read-only assessment to an agent that edits, scoped the work with a prompt file, reviewed an agent's TMDL diff, and fixed the report bindings that every rename breaks. The model now has business names, descriptions, hidden keys, and correct summarization, but it still has a missing relationship and no measures.
+
+<NextLab current="07" />
+
+## Go further
+
+- Open `Prescription Fill.tmdl` and read the descriptions the agent wrote for `Processing Minutes` and `Fill Type Code`. Would a new analyst understand them? Rewrite one, run `pwsh ./scripts/Test-ModelConventions.ps1 -Rule C02,C03`, and commit.
+- Ask the model-reviewer agent: "Review the rename commit for anything that would break a Power BI report in the service." Compare its answer with what you checked in step 4.
+
+<FeedbackLink />

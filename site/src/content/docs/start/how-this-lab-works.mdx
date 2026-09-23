@@ -1,0 +1,97 @@
+---
+title: How this lab works
+description: Learn the lab story, page structure, progress model, checkpoints, and verification commands.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Mermaid from '~/components/Mermaid.astro';
+import WhatVaries from '~/components/WhatVaries.astro';
+
+This lab turns a rough Power BI semantic model into an AI-ready model while teaching Copilot customization. The same five business questions score **3 of 10** on the baseline model and **10 of 10** after the AI-ready changes. The sample results are in [Expected results](/present/expected-results/).
+
+<Mermaid
+	label="Lab flow from setup to AI-ready validation"
+	code={`flowchart LR
+  A[Set up tools] --> B[Clone your copy]
+  B --> C[Inspect baseline]
+  C --> D[Customize Copilot]
+  D --> E[Assess and improve model]
+  E --> F[Test business questions]
+  F --> G[Review, cloud agent, extend]
+  B --> H[Restore checkpoints when needed]
+  H --> E`}
+/>
+
+## The story
+
+Contoso Pharmacy is synthetic. It has 12 fictional stores, four regions, generic medication categories, and fill events from 2024-01-01 to 2025-12-31. The baseline PBIP works, but it isn't ready for people or agents:
+
+- It uses source codes such as `fact_rx_fill`, `rgn`, and `proc_mins`.
+- It misses a key Medication relationship.
+- It has weak metadata, no measures, and no AI instructions.
+- Agents answer the five business questions with only partial success.
+
+You use Copilot features to improve the model as code: instructions, path instructions, `AGENTS.md`, skills, custom agents, handoffs, prompt files, hooks, MCP, Copilot CLI, cloud agent, code review, and APM.
+
+## How lab pages are structured
+
+Every lab page uses the same ten sections:
+
+1. **At a glance:** time, level, platform, surfaces, primitives, and checkpoints.
+2. **Why this matters:** the real reason for the lab.
+3. **Concepts:** terms you'll use in the steps.
+4. **Before you begin:** expected start state and catch-up command.
+5. **Steps:** numbered tasks with UI paths, commands, and observable results.
+6. **Verify your work:** the deterministic check for that lab.
+7. **Troubleshooting:** common failure modes.
+8. **Knowledge check:** short multiple-choice questions.
+9. **Recap and next:** what changed and where to go next.
+10. **Go further:** optional practice.
+
+Each step ends with **You should see:** and a tick box. Tick boxes are saved in your browser's `localStorage`, so they are local to one browser profile. The `/progress/` page reads the same local progress.
+
+## Verification is the source of truth
+
+The progress check is deterministic. Run it from the repo root:
+
+```powershell
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 07
+```
+
+Each lab page's **Verify your work** section shows the exact command. A failed check prints a hint and links back to the step that fixes it. The check contract lives in `lab/checks.yaml`, and the implementation lives in `tools/python/pharmacy_demo/labcheck/checks.py`.
+
+For full repo validation, run:
+
+```powershell
+pwsh ./scripts/Invoke-Validation.ps1
+```
+
+## Checkpoints help you catch up
+
+If you skip a lab, get stuck, or need a clean model state, use a checkpoint from the upstream repo:
+
+```powershell
+pwsh ./scripts/lab/Restore-LabCheckpoint.ps1 -Checkpoint lab07-complete
+```
+
+Checkpoint restore needs the `upstream` remote from [Lab 01](/labs/01-get-your-copy/#step-3). It restores `fabric/` and lab samples, then creates ignored outputs when needed. It doesn't overwrite your custom instructions, agents, skills, or prompts.
+
+## Agent output varies
+
+Agents may choose a different order, wording, or intermediate DAX. That is normal. What matters is the final repo state and validation output.
+
+<WhatVaries mustMatch={["The lab check passes", "The expected files exist", "Validation reports no required failures"]}>
+Agent responses, proposed plans, and explanations can differ between runs and model versions. Use the check command, not the phrasing, as the pass condition.
+</WhatVaries>
+
+## Synthetic data notice
+
+Everything in `data/generated/` is synthetic. There are no patients, prescribers, members, addresses, real store names, tenant IDs, workspace IDs, service principals, or credentials. Don't add real data or screenshots with real account details.
+
+## Where to give feedback
+
+Use the feedback link at the bottom of each lab. Include the lab number, step number, OS, tool versions, what you expected, and what you saw. If the issue is about a generated reference page, say which file or script produced it.
+
+<Aside type="tip" title="Presenter path">
+If you're preparing a demo, use [Choose a track](/start/choose-a-track/) and the [Presenter pages](/present/30-minute-demo/) instead of running every lab live.
+</Aside>

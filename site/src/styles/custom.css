@@ -1,0 +1,166 @@
+:root {
+	--sl-color-accent-low: #083b37;
+	--sl-color-accent: #0f766e;
+	--sl-color-accent-high: #ccfbf1;
+}
+:root[data-theme='light'] {
+	--sl-color-accent-low: #ccfbf1;
+	--sl-color-accent: #0f766e;
+	--sl-color-accent-high: #134e4a;
+}
+
+.lab-meta {
+	border: 1px solid var(--sl-color-gray-5);
+	border-radius: 0.5rem;
+	padding: 1rem 1.25rem;
+	margin-block: 1rem;
+	background: var(--sl-color-gray-7, var(--sl-color-gray-6));
+}
+.lab-meta dl {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+	gap: 0.5rem 1.5rem;
+	margin: 0;
+}
+.lab-meta dt {
+	font-size: var(--sl-text-xs);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--sl-color-gray-3);
+}
+.lab-meta dd {
+	margin: 0;
+}
+.lab-meta-badges {
+	margin: 0.75rem 0 0;
+}
+.lab-meta-stale {
+	margin: 0.75rem 0 0;
+	color: var(--sl-color-orange-high);
+}
+
+.cp-check {
+	display: inline-flex;
+	gap: 0.5rem;
+	align-items: center;
+	margin-block: 0.75rem;
+	padding: 0.35rem 0.75rem;
+	border: 1px dashed var(--sl-color-accent);
+	border-radius: 0.4rem;
+	cursor: pointer;
+}
+.cp-check input {
+	width: 1.1rem;
+	height: 1.1rem;
+	accent-color: var(--sl-color-accent);
+}
+
+.kc {
+	border: 1px solid var(--sl-color-gray-5);
+	border-radius: 0.5rem;
+	padding: 0.75rem 1rem 1rem;
+	margin-block: 1rem;
+}
+.kc legend {
+	font-weight: 600;
+	padding-inline: 0.25rem;
+}
+.kc label {
+	display: flex;
+	gap: 0.5rem;
+	align-items: baseline;
+	margin-block: 0.35rem;
+	cursor: pointer;
+}
+.kc-result[data-state='right'] {
+	color: var(--sl-color-green-high);
+}
+.kc-result[data-state='wrong'] {
+	color: var(--sl-color-orange-high);
+}
+.kc details {
+	margin-top: 0.5rem;
+}
+
+.repo-file-link {
+	font-size: var(--sl-text-sm);
+	margin-top: 0.25rem;
+}
+
+.track-picker {
+	display: grid;
+	gap: 0.75rem;
+	margin-block: 1rem;
+}
+.track-option {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.25rem 0.75rem;
+	padding: 0.75rem 1rem;
+	border: 1px solid var(--sl-color-gray-5);
+	border-radius: 0.5rem;
+	cursor: pointer;
+}
+.track-option:has(input:checked) {
+	border-color: var(--sl-color-accent);
+}
+.track-name {
+	font-weight: 600;
+}
+.track-labs {
+	grid-column: 2;
+	font-size: var(--sl-text-sm);
+}
+
+.progress-summary table {
+	width: 100%;
+}
+.progress-off-track {
+	opacity: 0.55;
+}
+.progress-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	margin-top: 1rem;
+}
+.progress-actions button,
+.progress-import {
+	padding: 0.4rem 0.9rem;
+	border: 1px solid var(--sl-color-gray-4);
+	border-radius: 0.4rem;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+	font: inherit;
+}
+.progress-import input {
+	max-width: 14rem;
+}
+
+.mermaid-figure {
+	margin-block: 1.5rem;
+}
+.mermaid-figure pre.mermaid {
+	background: transparent;
+	border: 0;
+	text-align: center;
+}
+.mermaid-figure figcaption {
+	font-size: var(--sl-text-sm);
+	color: var(--sl-color-gray-3);
+	text-align: center;
+}
+
+.feedback-link {
+	margin-top: 2rem;
+	font-size: var(--sl-text-sm);
+	color: var(--sl-color-gray-3);
+}
+
+.hero-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	margin-block: 1rem 2rem;
+}

@@ -1,0 +1,64 @@
+---
+import { Badge } from '@astrojs/starlight/components';
+import { checkpoints } from '../lib/repo';
+
+const lab = Astro.locals.starlightRoute.entry.data.lab;
+if (!lab) throw new Error('LabMeta is only for lab pages; add the lab frontmatter block.');
+
+const platformLabel: Record<string, string> = {
+	windows: 'Windows 11',
+	macos: 'macOS',
+	'macos-file-mode': 'macOS (file mode, no Desktop)',
+};
+const surfaceLabel: Record<string, string> = {
+	vscode: 'VS Code',
+	cli: 'Copilot CLI',
+	'cloud-agent': 'Copilot cloud agent',
+	'code-review': 'Copilot code review',
+	github: 'github.com',
+	desktop: 'Power BI Desktop',
+};
+const describe = (name: string) =>
+	name === 'none' ? 'None needed' : `${name}: ${checkpoints.find((c) => c.name === name)?.description ?? ''}`;
+const ageDays = lab.lastVerified ? Math.floor((Date.now() - lab.lastVerified.getTime()) / 86_400_000) : 0;
+const verified = lab.lastVerified ? lab.lastVerified.toISOString().slice(0, 10) : 'Not yet run end to end on Windows 11';
+---
+
+<div class="lab-meta not-content">
+	<dl>
+		<div><dt>Time</dt><dd>About {lab.durationMinutes} minutes</dd></div>
+		<div><dt>Level</dt><dd>{lab.level}</dd></div>
+		<div>
+			<dt>Platforms</dt>
+			<dd>{lab.platforms.map((p) => platformLabel[p]).join(', ')}</dd>
+		</div>
+		<div><dt>Copilot surfaces</dt><dd>{lab.surfaces.map((s) => surfaceLabel[s]).join(', ')}</dd></div>
+		<div><dt>You'll use</dt><dd>{lab.primitives.join(', ') || 'none'}</dd></div>
+		<div><dt>Starts from</dt><dd>{describe(lab.startCheckpoint)}</dd></div>
+		<div><dt>Ends at</dt><dd>{describe(lab.endCheckpoint)}</dd></div>
+		<div><dt>Last verified</dt><dd>{verified}</dd></div>
+	</dl>
+	<p class="lab-meta-badges">
+		{lab.requiresDesktop && <Badge text="Windows only: needs Power BI Desktop" variant="caution" />}
+		{!lab.requiresDesktop && lab.platforms.some((p) => p.startsWith('macos')) && (
+			<Badge text="Works on macOS" variant="success" />
+		)}
+	</p>
+	{
+		!lab.lastVerified && (
+			<p class="lab-meta-stale">
+				Nobody has run this lab end to end on Windows 11 yet. The steps follow the current docs for each tool,
+				but menu labels may differ. The verify command at the end is the source of truth, and
+				feedback is welcome.
+			</p>
+		)
+	}
+	{
+		ageDays > 90 && (
+			<p class="lab-meta-stale">
+				This lab was last checked {ageDays} days ago. Menu labels in VS Code or Power BI Desktop may have
+				moved. The verify command at the end is still the source of truth.
+			</p>
+		)
+	}
+</div>

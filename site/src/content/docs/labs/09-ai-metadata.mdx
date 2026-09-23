@@ -1,0 +1,333 @@
+---
+title: "Lab 09: AI metadata"
+description: "Draft Prep data for AI metadata, add model flags, and prepare the model for Copilot-style questions."
+sidebar:
+  label: "09. AI metadata"
+lab:
+  number: 9
+  durationMinutes: 35
+  level: intermediate
+  platforms: [windows, macos-file-mode]
+  requiresDesktop: false
+  surfaces: [vscode, desktop]
+  primitives: [skill, prompt-file, instructions]
+  startCheckpoint: lab08-complete
+  endCheckpoint: lab09-complete
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import WhatVaries from '~/components/WhatVaries.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+Copilot, Q&A, and Fabric data agents don't only read table names. They also need business rules that don't fit cleanly in a measure description. Prep data for AI gives you a place to define those rules, narrow the schema, add synonyms, and map verified answers to approved visuals. In this repo, the Power BI-managed files for those features are treated as preview output, so you draft the content as plain text first and apply it later in Power BI Desktop or the Power BI service.
+
+## Concepts
+
+- **Prep data for AI:** a Power BI authoring experience for AI instructions, AI data schemas, and verified answers. Microsoft Learn marks the experience as preview, and the exact Desktop and service UI can move between monthly releases.
+- **AI instructions:** model-level business guidance. This is where you define latest month, previous period, refill thresholds, and processing time. See [AI readiness](/reference/ai-readiness-checklist/).
+- **AI data schema:** the subset of model objects that AI tools should use for question answering. It reduces noisy choices.
+- **Synonyms:** alternate phrases on tables, columns, and measures. In this lab they stay in `fabric/ai-prep/synonyms.yaml` until a person applies them in Power BI.
+- **Verified answers:** reviewed answer candidates that map a business question to a visual and trigger phrases.
+
+<Aside type="note" title="Preview disclaimer">
+The Microsoft Learn article [Prepare Your Data for AI to Improve Copilot Results](https://learn.microsoft.com/en-us/power-bi/create-reports/copilot-prepare-data-ai) says authors can now use **Prep data for AI** in both Power BI Desktop and the Power BI service. It is still labeled preview. These labs keep drafts in `fabric/ai-prep/` because preview file formats can change.
+</Aside>
+
+## Before you begin
+
+- You finished [Lab 08](/labs/08-relationships-and-measures/). The model has relationships, a marked Date table, the 12 core measures, and Fill Type.
+- `evaluation/runs/local-baseline.json` exists from Lab 05, and `out/assessment.md` exists from Lab 06.
+- You are on a feature branch, usually `feature/ai-ready-names`.
+- Power BI Desktop can be closed. The required work in this lab is text-first and works on macOS file mode.
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Read the AI prep contract
+
+Open these files in VS Code before you run the agent:
+
+1. Open Quick Open: **Ctrl+P** (macOS: **Cmd+P**), or **Go > Go to File**.
+2. Open `.github/skills/prep-data-for-ai/SKILL.md`.
+3. Open `.github/prompts/write-ai-prep-drafts.prompt.md`.
+4. Open `rules/required-model-objects.yaml`.
+
+The skill explains why the repo drafts the content instead of writing Desktop's preview folder directly:
+
+<RepoFile path=".github/skills/prep-data-for-ai/SKILL.md" lines="7-16" />
+
+The prompt names the five files and the two model flags:
+
+<RepoFile path=".github/prompts/write-ai-prep-drafts.prompt.md" lines="6-14" />
+
+**You should see:** the skill says to write only in `fabric/ai-prep/`, never in `ContosoPharmacy.SemanticModel/Copilot/`. The rules file says rule C14 expects Q&A enabled plus default labels on Store Name and Medication Name.
+
+<Checkpoint lab="09" step="1" />
+
+### Step 2. Draft the five AI prep files
+
+Run the prompt with the model-improver agent.
+
+1. Open Copilot Chat: **Ctrl+Alt+I** (macOS: **Ctrl+Cmd+I**), or **View > Chat**.
+2. Pick **model-improver** from the agent dropdown.
+3. Type `/write-ai-prep-drafts` and press **Enter**.
+4. Approve read, edit, and validation commands after you inspect them.
+
+The prompt writes exactly these files:
+
+<RepoFile path="rules/required-model-objects.yaml" lines="40-51" />
+
+**You should see:** a new `fabric/ai-prep/` folder with `README.md`, `ai-instructions.md`, `ai-data-schema.yaml`, `synonyms.yaml`, and `verified-answers.yaml`. You should not see a new `ContosoPharmacy.SemanticModel/Copilot/` folder.
+
+<WhatVaries mustMatch={['The folder is fabric/ai-prep', 'All five draft files exist', 'No Copilot folder is created under the semantic model']}>
+The agent may draft short files first, run the lab check, then fill gaps reported by the check.
+</WhatVaries>
+
+<Checkpoint lab="09" step="2" />
+
+### Step 3. Review the AI instructions
+
+Open `fabric/ai-prep/ai-instructions.md` and check the rules that make ambiguous questions answerable.
+
+1. Open Quick Open: **Ctrl+P** (macOS: **Cmd+P**), or **Go > Go to File**.
+2. Open `fabric/ai-prep/ai-instructions.md`.
+3. Confirm it is under 10,000 characters. In VS Code, use **Ctrl+Shift+P** (macOS: **Cmd+Shift+P**) > **File: Save As** only if you need to copy it elsewhere. Otherwise, use the status bar character count if your version shows it, or run the command below.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+(Get-Content -Raw fabric/ai-prep/ai-instructions.md).Length
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+python3 - <<'PY'
+from pathlib import Path
+print(len(Path('fabric/ai-prep/ai-instructions.md').read_text(encoding='utf-8')))
+PY
+```
+
+</TabItem>
+</Tabs>
+
+The skill names the required definitions:
+
+<RepoFile path=".github/skills/prep-data-for-ai/SKILL.md" lines="30-40" />
+
+**You should see:** sentences that define December 2025 as the latest complete month, previous period as the previous month by default, unusually high refill activity as `[Refill Rate Index vs Chain]` of 1.25 or more, and processing time as `[Avg Processing Time (min)]`.
+
+<Checkpoint lab="09" step="3" />
+
+### Step 4. Review synonyms where the skill says they go
+
+Synonyms stay in the draft file for review. They do not go into a `Copilot/` folder in this lab.
+
+1. Open `fabric/ai-prep/synonyms.yaml`.
+2. Check the `tables`, `columns`, and `measures` maps.
+3. Confirm the required keys from the skill are present.
+
+<RepoFile path=".github/skills/prep-data-for-ai/references/formats.md" lines="42-59" />
+
+**You should see:** synonyms for `Prescription Fill[Prescriptions Filled]`, `Prescription Fill[Avg Processing Time (min)]`, `Medication[Therapeutic Category]`, and `Store[Region]`. Phrases should be business terms like "scripts filled", "turnaround time", "drug category", and "territory".
+
+<Checkpoint lab="09" step="4" />
+
+### Step 5. Review verified answer candidates
+
+Verified answers connect important phrases to approved visuals. The drafts are reviewable YAML because a human still applies them in Power BI.
+
+1. Open `fabric/ai-prep/verified-answers.yaml`.
+2. Confirm it has one candidate for each question ID, Q01 to Q05.
+3. For each candidate, check that `visual` names the visual to build and `phrases` contains the original question plus at least one paraphrase.
+
+<RepoFile path=".github/skills/prep-data-for-ai/references/formats.md" lines="61-74" />
+
+**You should see:** at least five candidates with `phrases`. Each question from `pwsh ./scripts/Get-BusinessQuestions.ps1` has a candidate.
+
+<Checkpoint lab="09" step="5" />
+
+### Step 6. Confirm Q&A and default labels
+
+The drafts alone don't satisfy the model checks. The model also needs Q&A enabled and default labels for the two entity tables.
+
+1. Open `fabric/ContosoPharmacy.SemanticModel/definition.pbism`.
+2. Confirm `settings.qnaEnabled` is `true`.
+3. Open the Store and Medication TMDL files.
+4. Confirm `Store Name` and `Medication Name` have `isDefaultLabel`.
+5. Run the lab check.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 09
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 09
+```
+
+</TabItem>
+</Tabs>
+
+The rule source lists the default labels:
+
+<RepoFile path="rules/required-model-objects.yaml" lines="36-51" />
+
+**You should see:** all Lab 09 checks pass, including `L09-model-flags`. If it fails with C14, ask model-improver to set the default labels without changing any names.
+
+<Checkpoint lab="09" step="6" />
+
+### Step 7. Apply the drafts in Power BI when the UI is available
+
+<PlatformBadge kind="windows-only" /> <PlatformBadge kind="preview" />
+
+This step is version dependent. If your Power BI Desktop build shows **Prep data for AI**, you can apply the drafts now. If it doesn't, keep the drafts in the PR and apply them later in the service.
+
+1. Open `fabric\ContosoPharmacy.pbip` in Power BI Desktop.
+2. Select **Home > Prep data for AI**. If you don't see it, select **File > Options and settings > Options > Preview features** and look for **Prep data for AI**. Restart Desktop if you enable it.
+3. In the Prep data for AI dialog, paste the contents of `fabric/ai-prep/ai-instructions.md` into **AI instructions**.
+4. Use the schema draft to include the recommended tables and exclude noisy fields.
+5. Add synonyms in **Model view > select object > Properties > Synonyms**.
+6. For verified answers, select the report visual, open **More options (...) > Set up a verified answer**, and paste the trigger phrases from `verified-answers.yaml`.
+
+**You should see:** the Desktop dialog accepts the content, and Desktop writes its own preview files when you save. If the UI isn't present, you still have the reviewable drafts and the model flags from step 6.
+
+<Aside type="note" title="No Desktop?">
+Skip this step. Service-side Copilot and Fabric data agents are phase two for this lab path. See the [roadmap](/roadmap/) for the tenant-connected version.
+</Aside>
+
+<Checkpoint lab="09" step="7" />
+
+### Step 8. Commit the AI metadata drafts
+
+Review only the expected files, then commit them.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git status --short
+git add fabric/ai-prep fabric/ContosoPharmacy.SemanticModel
+git commit -m "Add AI prep metadata drafts"
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git status --short
+git add fabric/ai-prep fabric/ContosoPharmacy.SemanticModel
+git commit -m "Add AI prep metadata drafts"
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** a commit that includes `fabric/ai-prep/`, `definition.pbism`, and the two TMDL files with default labels. It should not include `out/`, `evaluation/runs/local-*.json`, or Desktop cache files.
+
+<Checkpoint lab="09" step="8" />
+
+## Verify your work
+
+<VerifyStep lab="09" />
+
+## Troubleshooting
+
+<details>
+<summary>The agent created a semantic model Copilot folder</summary>
+
+Reject that change. Run `git restore -- fabric/ContosoPharmacy.SemanticModel/Copilot` if the folder exists, then rerun `/write-ai-prep-drafts` and remind the agent: "Draft only in fabric/ai-prep. Do not create or edit the Desktop-managed Copilot folder." The hook is designed to deny that edit in CLI and cloud agent, but VS Code agent behavior can vary by version.
+
+</details>
+
+<details>
+<summary>The instructions check says a required term is missing</summary>
+
+Open `fabric/ai-prep/ai-instructions.md` and add a short sentence for the missing concept. The check looks for the terms in `rules/required-model-objects.yaml`: December 2025, previous month, Refill Rate Index vs Chain, 1.25, Avg Processing Time (min), and Therapeutic Category.
+
+</details>
+
+<details>
+<summary>The synonyms YAML doesn't parse</summary>
+
+YAML treats colons and brackets as structure. Keep keys unquoted only when they match the examples. If you get a parse error, quote the key, for example `'Prescription Fill[Prescriptions Filled]'`, and rerun `pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 09`.
+
+</details>
+
+<details>
+<summary>Power BI Desktop doesn't show Prep data for AI</summary>
+
+The feature is preview and version dependent. Check **File > Options and settings > Options > Preview features**. If the option isn't there, keep the drafts in `fabric/ai-prep/` and apply them later in the Power BI service when your tenant has the feature.
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="Where do the AI prep drafts belong in this repo?"
+	options={[
+		'fabric/ai-prep/, so they can be reviewed before a person applies them in Power BI',
+		'ContosoPharmacy.SemanticModel/Copilot/, because the agent should write Desktop preview files directly',
+		'evaluation/expected/, because the grader reads them',
+	]}
+	answer={0}
+	explanation="The skill says drafts live in fabric/ai-prep/. Desktop or the service writes the preview Copilot files when a person applies the content."
+/>
+
+<KnowledgeCheck
+	question="Which statement belongs in AI instructions instead of a column description?"
+	options={[
+		'Processing Minutes stores the number of minutes between receipt and fill completion.',
+		'Previous period means the previous month unless the user names another period.',
+		'Store Name is the friendly display name for a pharmacy store.',
+	]}
+	answer={1}
+	explanation="Descriptions explain objects. AI instructions settle cross-model business rules and ambiguous wording."
+/>
+
+<KnowledgeCheck
+	question="What does rule C14 check?"
+	options={[
+		'The Date table is marked and auto date/time is off.',
+		'Q&A is enabled and Store Name plus Medication Name are default labels.',
+		'Every verified answer candidate has a screenshot.',
+	]}
+	answer={1}
+	explanation="The Lab 09 model flag check calls C14 after confirming qnaEnabled is true."
+/>
+
+## Recap and next
+
+You drafted the AI metadata a Power BI author applies later: instructions, a schema, synonyms, and verified answer candidates. You also set model flags that are safe to store in TMDL now. The next lab tests whether those changes improve the business question answers.
+
+<NextLab current="09" />
+
+## Go further
+
+- Add one synonym you hear in your own organization, then ask model-reviewer whether it is ambiguous.
+- Shorten `ai-instructions.md` by 25 percent without losing the six required definitions, then rerun the Lab 09 check.
+- In Desktop or the service, test one verified answer phrase and compare the returned visual with the YAML draft.
+
+<FeedbackLink />

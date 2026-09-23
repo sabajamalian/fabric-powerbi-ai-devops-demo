@@ -1,0 +1,51 @@
+# Objects the AI-ready model must contain. Read by conventions.py and the lab checks.
+version: 1
+
+tables: [Date, Store, Medication, Prescription Fill]
+
+date_table:
+  table: Date
+  key_column: Date
+  data_category: Time
+  auto_date_time: false
+  sort_by:
+    Month: Month Number
+    Year Month: Year Month Number
+    Day of Week: Day of Week Number
+  hierarchy:
+    name: Calendar
+    levels: [Year, Year Quarter, Year Month, Date]
+
+relationships:
+  - from: ["Prescription Fill", "Fill Date"]
+    to: ["Date", "Date"]
+  - from: ["Prescription Fill", "Store Key"]
+    to: ["Store", "Store Key"]
+  - from: ["Prescription Fill", "Medication Key"]
+    to: ["Medication", "Medication Key"]
+single_direction_only: true
+
+measures:
+  table: Prescription Fill
+  required:
+    Volume: [Prescriptions Filled, New Prescriptions]
+    Refills: [Refills, Refill Rate, Refill Rate Index vs Chain, High Refill Activity Flag]
+    Processing: [Avg Processing Time (min)]
+    Time Comparison: [Prescriptions Filled PM, MoM Change, MoM %, Prescriptions Filled PY, YoY %]
+
+default_labels:
+  Store: Store Name
+  Medication: Medication Name
+
+ai_prep:
+  folder: fabric/ai-prep
+  files: [README.md, ai-instructions.md, ai-data-schema.yaml, synonyms.yaml, verified-answers.yaml]
+  instructions_max_chars: 10000
+  instructions_must_mention: [December 2025, previous month, Refill Rate Index vs Chain, "1.25", Avg Processing Time (min), Therapeutic Category]
+  synonyms_required_for:
+    - "Prescription Fill[Prescriptions Filled]"
+    - "Prescription Fill[Avg Processing Time (min)]"
+    - "Medication[Therapeutic Category]"
+    - "Store[Region]"
+  min_verified_answers: 5
+  qna_enabled: true

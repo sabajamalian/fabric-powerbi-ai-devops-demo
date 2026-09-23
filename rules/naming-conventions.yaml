@@ -1,0 +1,37 @@
+# Naming and metadata conventions for the Contoso Pharmacy semantic model.
+# Read by tools/python/pharmacy_demo/conventions.py, the pharmacy-model-conventions skill,
+# and the model-assessor agent. Change these rules in a pull request, not in a lab.
+version: 1
+
+names:
+  # Visible tables, columns, measures, and hierarchies use business-friendly Title Case words.
+  visible_object_pattern: "^[A-Z0-9][A-Za-z0-9 %()&/'.-]*$"
+  forbid_underscores: true
+  # Abbreviations that must be spelled out in visible names (case-insensitive whole words).
+  forbidden_abbreviations: [rx, dt, nm, cd, typ, qty, rgn, mth, yr, qtr, dow, med, ther, cat, sply, proc, mins, flg, gnrc, wkend, dim, fact]
+  # Allowed short forms because business users say them.
+  allowed_short_forms: [ID, MoM, YoY, PM, PY, min]
+
+descriptions:
+  required_for: [table, visible_column, measure]
+  max_length: 200          # Power BI Copilot reads only the first 200 characters.
+  min_length: 20
+
+columns:
+  # Columns that must be hidden: surrogate keys, foreign keys, and sort helpers.
+  hidden_patterns: ["(?i)[ _]key$", "(?i)^fill[ _]id$", "(?i)(?<!refill)[ _](number|num)$"]
+  # Only these columns may keep a default summarization other than none.
+  additive:
+    "Prescription Fill":
+      Quantity: sum
+      Days Supply: sum
+      Processing Time (min): average
+  # Visible text columns that hold raw codes need a decoded, visible alternative.
+  raw_code_columns:
+    "Prescription Fill":
+      Fill Type Code: Fill Type
+
+measures:
+  require_format_string: true
+  require_display_folder: true
+  display_folders: [Volume, Refills, Processing, Time Comparison]

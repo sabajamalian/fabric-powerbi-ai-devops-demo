@@ -1,0 +1,72 @@
+---
+title: FAQ
+description: "Answers to common questions about the Contoso Pharmacy Copilot and Power BI model-as-code labs."
+---
+
+## Do I need a Fabric tenant?
+
+No. The labs use a local Power BI Project, synthetic CSV data, GitHub, VS Code, and validation scripts. Fabric workspaces, capacities, deployment pipelines, and service principals are not required.
+
+## Do I need Power BI Desktop?
+
+Only for the full Windows track. Power BI Desktop is Windows-only, so macOS learners use the file-mode and Copilot-only path. The TMDL, PBIR, agent customization, hooks, CLI, cloud agent, and site work can still be read and edited as files.
+
+## Can I use macOS?
+
+Yes, for the Copilot-only track. You can run most scripts in PowerShell 7, validate TMDL and PBIR files, use VS Code customizations, and run the site. You cannot run Desktop-only steps or live Desktop MCP steps.
+
+## Is any data real?
+
+No. The data is synthetic retail pharmacy data generated from a fixed seed. There are no patients, prescribers, members, addresses, or health records. Read [Security and synthetic data](/help/security-and-synthetic-data/).
+
+## Why TMDL and PBIR?
+
+They make the Power BI semantic model and report reviewable as text. Agents can read and edit model metadata, relationships, measures, descriptions, and report bindings in Git. The labs still ask you to validate with Desktop when a Windows-only check needs it.
+
+## Why use agents instead of one big prompt?
+
+Agents let you bind a role to the right tools and handoffs. A read-only assessor should not edit files. An improver can edit and validate. A reviewer can stay read-only. That separation is safer than one prompt that tries to do everything.
+
+## Why are answers different each run?
+
+Agents are nondeterministic. They may choose different DAX, wording, or ordering. The lab checks focus on persistent outputs, validation results, and model state instead of exact chat text.
+
+## Can I use this with my own model?
+
+Yes, but treat this repo as a pattern, not a drop-in validator. You need your own data dictionary, model conventions, evaluation questions, expected answers, and guardrails. Do not put real health data in this demo repo.
+
+## What does APM add?
+
+APM records external agent dependencies and installs them into the expected target locations. This repo uses it to install the Skills for Fabric `semantic-model-authoring` skill into `.agents/skills/`, pinned by `apm.lock.yaml`.
+
+## Does anything leave my machine?
+
+Local validation stays on your machine. GitHub features such as pull requests, Copilot code review, and Copilot cloud agent run on GitHub and send task context to GitHub Copilot. Power BI Copilot and Fabric data agents are not used in these labs.
+
+## Do I need GitHub Copilot paid features?
+
+The early local file labs can still teach the repo patterns, but later labs use paid-plan features: Copilot code review and Copilot cloud agent. The pages mark those with a paid-plan badge.
+
+## Why does the lab use synthetic pharmacy data?
+
+The domain is concrete enough for business questions, model defects, and AI-readiness work. The data stays safe for a public repo because it has no PHI, no people, and no real stores.
+
+## Why are there checkpoints?
+
+Checkpoints let you skip ahead or recover when an agent takes a different path. They restore known model states from upstream tags without changing your customizations.
+
+## Can I skip Desktop and still learn the agent patterns?
+
+Yes. Use the file-mode path. You can still study TMDL, custom instructions, skills, agents, prompt files, hooks, CLI, cloud agent, APM, CI, and code review.
+
+## Can I connect this to Fabric deployment later?
+
+Yes, but that is not in this lab. See [Roadmap](/roadmap/) for phase two items such as Fabric workspaces, deployment pipelines, fabric-cicd, governance, and monitoring.
+
+## Why does validation sometimes pass while the model is still weak?
+
+Validation checks syntax, bindings, hygiene, expected-answer freshness, and declared conventions. The baseline model is intentionally weak for AI questions, but it still parses and binds. Later labs measure whether answers improve.
+
+## Can I keep the files I created in Lab 14?
+
+Yes. The skill, agent, and prompt are normal repository customizations. Keep them, revise them, or package the skill for another repo with APM.

@@ -1,0 +1,22 @@
+{
+  "question_id": "Q05",
+  "question": "How did prescription volume compare with the previous period?",
+  "generated_by": "pharmacy_demo.oracle (DuckDB over data/generated/*.csv)",
+  "columns": [
+    "period",
+    "prescriptions_filled",
+    "previous_period_fills",
+    "change",
+    "change_pct"
+  ],
+  "rows": [
+    {
+      "period": "2025-12",
+      "prescriptions_filled": 2052,
+      "previous_period_fills": 1761,
+      "change": 291,
+      "change_pct": 0.165247
+    }
+  ],
+  "data_fingerprint": "658460be187cd13729aa2161c1ecaa1a2590538eb83a93f18ca1a1c3c65efcee"
+}

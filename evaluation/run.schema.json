@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sabajamalian/fabric-powerbi-ai-devops-demo/evaluation/run.schema.json",
+  "title": "Question run",
+  "description": "One run of the question-tester agent (or a person) answering evaluation/questions.yaml against one model state.",
+  "type": "object",
+  "required": ["label", "model_state", "created", "answers"],
+  "additionalProperties": false,
+  "properties": {
+    "label": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "model_state": { "enum": ["baseline", "lab07", "lab08", "ai-ready", "other"] },
+    "illustrative": { "type": "boolean", "description": "True for committed sample runs that illustrate typical results." },
+    "created": { "type": "string" },
+    "agent": { "type": "string" },
+    "surface": { "enum": ["vscode", "copilot-cli", "cloud-agent", "manual", "generated"] },
+    "model": { "type": "string", "description": "LLM used, if known." },
+    "notes": { "type": "string" },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["question_id", "rows"],
+        "additionalProperties": false,
+        "properties": {
+          "question_id": { "type": "string", "pattern": "^Q\\d{2}$" },
+          "answer_text": { "type": "string" },
+          "dax": { "type": "string" },
+          "assumptions": { "type": "array", "items": { "type": "string" } },
+          "rows": { "type": "array", "items": { "type": "object" } },
+          "grade_override": {
+            "type": "object",
+            "required": ["score", "reason"],
+            "properties": {
+              "score": { "enum": [0, 1, 2] },
+              "reason": { "type": "string", "minLength": 5 }
+            }
+          }
+        }
+      }
+    },
+    "grade": {
+      "type": "object",
+      "description": "Written by Grade-QuestionRun.ps1. Don't edit by hand.",
+      "required": ["total", "max", "by_question"],
+      "properties": {
+        "total": { "type": "integer" },
+        "max": { "type": "integer" },
+        "graded": { "type": "string" },
+        "by_question": { "type": "object" }
+      }
+    }
+  }
+}

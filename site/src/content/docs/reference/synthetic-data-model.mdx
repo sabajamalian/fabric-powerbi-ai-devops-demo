@@ -1,0 +1,136 @@
+---
+title: "Synthetic data model"
+description: "The retail pharmacy data, model grain, planted business patterns, generator seed, and AI-ready naming approach."
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import RepoFile from '~/components/RepoFile.astro';
+import Mermaid from '~/components/Mermaid.astro';
+
+## Dataset purpose
+
+The dataset is fictional retail pharmacy data. It is small enough for a laptop and rich enough for natural-language questions to fail before the model is improved.
+
+The generator is deterministic. The seed is `20260101`, and the date range is 2024-01-01 to 2025-12-31.
+
+<RepoFile path="data/README.md" />
+
+## Tables and grain
+
+| Table | Business name | Grain | Rows |
+|---|---|---|---:|
+| `dim_date` | Date | One row per calendar date. | 731 |
+| `dim_store` | Store | One row per fictional pharmacy store. | 12 |
+| `dim_med` | Medication | One row per generic medication. | 60 |
+| `fact_rx_fill` | Prescription Fill | One row per prescription fill event. | About 41,500 |
+
+<RepoFile path="data/schema/tables.json" lines="1-120" />
+
+## Star schema
+
+<Mermaid
+  label="Retail pharmacy star schema"
+  code={`erDiagram
+    DIM_DATE ||--o{ FACT_RX_FILL : date_key
+    DIM_STORE ||--o{ FACT_RX_FILL : store_id
+    DIM_MED ||--o{ FACT_RX_FILL : med_id
+
+    DIM_DATE {
+      string date_key PK
+      date date
+      int year
+      int month
+      string quarter
+    }
+    DIM_STORE {
+      string store_id PK
+      string store_name
+      string region
+      string state
+      string store_tier
+    }
+    DIM_MED {
+      string med_id PK
+      string generic_name
+      string therapeutic_class
+      boolean maintenance_flag
+    }
+    FACT_RX_FILL {
+      string fill_id PK
+      string date_key FK
+      string store_id FK
+      string med_id FK
+      int fill_count
+      decimal gross_revenue
+      decimal net_revenue
+      decimal ingredient_cost
+      decimal margin
+      boolean refill_flag
+    }
+  `}
+/>
+
+## Column names with business meaning
+
+The conventions skill includes the data dictionary learners use while improving names and descriptions.
+
+<RepoFile path=".github/skills/pharmacy-model-conventions/references/data-dictionary.md" />
+
+The baseline model starts with raw names such as `fact_rx_fill`, `rx_count`, and `refill_flag`. The AI-ready model uses names such as `Prescription Fill`, `Prescription Count`, and `Refill Prescription Flag`, plus descriptions and synonyms.
+
+## How the generator works
+
+`tools/python/pharmacy_demo/datagen.py` creates dimensions first, then fills. It plants store mix, region effects, class seasonality, refill behavior, margin values, and month-specific patterns.
+
+<RepoFile path="tools/python/pharmacy_demo/datagen.py" lines="1-80" />
+
+The generator also writes `data/schema/tables.json`, so the data and schema stay aligned.
+
+## Planted patterns
+
+The patterns make the five business questions test different model capabilities:
+
+| Pattern | Why it matters |
+|---|---|
+| Respiratory medications rise in winter. | Tests therapeutic class names and time intelligence. |
+| Respiratory has the largest class increase in December 2025. | Tests class grouping and month comparison. |
+| Dermatology drops in December 2025. | Makes the largest increase non-trivial. |
+| Sunset Mesa is the slowest store. | Tests store naming and sorting. |
+| Riverbend and Granite Park have high refill outliers in 2025-Q4. | Tests refill logic and quarter filters. |
+| December 2025 has 2,052 fills and November 2025 has 1,761 fills. | Gives an exact month-over-month expected answer. |
+
+## Regenerate and check
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/New-SyntheticData.ps1
+pwsh ./scripts/Update-ExpectedResults.ps1
+pwsh ./scripts/Invoke-Validation.ps1 -Only data,expected,questions
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+python -m pharmacy_demo data generate
+python -m pharmacy_demo expected generate
+python -m pharmacy_demo validate --only data expected questions
+```
+
+</TabItem>
+</Tabs>
+
+Use scripts from [Scripts](/reference/scripts/) when you are following the lab. Use the Python module directly only when you are maintaining the tool package.
+
+## Baseline versus AI-ready
+
+| Area | Baseline | AI-ready target |
+|---|---|---|
+| Table names | Technical source names. | Business nouns. |
+| Column names | Abbreviations and raw flags. | Business names with units and flags spelled out. |
+| Descriptions | Sparse or missing. | Plain-English meaning and calculation notes. |
+| Relationships | Some missing or inactive. | Explicit star-schema relationships. |
+| Measures | Not enough reusable business measures. | Core measures and deterministic DAX tests. |
+| AI metadata | Missing drafts. | Instructions, schema, synonyms, and verified answers prepared for Desktop. |

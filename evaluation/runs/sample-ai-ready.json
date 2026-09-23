@@ -1,0 +1,699 @@
+{
+  "label": "sample-ai-ready",
+  "model_state": "ai-ready",
+  "illustrative": true,
+  "created": "2026-01-15T00:00:00Z",
+  "agent": "question-tester",
+  "surface": "generated",
+  "notes": "Illustrative: answers from the AI-ready model using its measures. Not live agent output.",
+  "answers": [
+    {
+      "question_id": "Q01",
+      "answer_text": "Prescriptions Filled by Region and Year Month for January 2024 to December 2025.",
+      "dax": "EVALUATE\nSUMMARIZECOLUMNS(\n    'Store'[Region],\n    'Date'[Year Month],\n    \"Prescriptions Filled\", [Prescriptions Filled]\n)\nORDER BY 'Store'[Region], 'Date'[Year Month]",
+      "assumptions": [
+        "Count every fill, new prescriptions and refills together, by store region and calendar month for all 24 months in the data (January 2024 to December 2025)."
+      ],
+      "rows": [
+        {
+          "region": "East",
+          "year_month": "2024-01",
+          "prescriptions_filled": 454
+        },
+        {
+          "region": "East",
+          "year_month": "2024-02",
+          "prescriptions_filled": 436
+        },
+        {
+          "region": "East",
+          "year_month": "2024-03",
+          "prescriptions_filled": 438
+        },
+        {
+          "region": "East",
+          "year_month": "2024-04",
+          "prescriptions_filled": 396
+        },
+        {
+          "region": "East",
+          "year_month": "2024-05",
+          "prescriptions_filled": 445
+        },
+        {
+          "region": "East",
+          "year_month": "2024-06",
+          "prescriptions_filled": 441
+        },
+        {
+          "region": "East",
+          "year_month": "2024-07",
+          "prescriptions_filled": 453
+        },
+        {
+          "region": "East",
+          "year_month": "2024-08",
+          "prescriptions_filled": 378
+        },
+        {
+          "region": "East",
+          "year_month": "2024-09",
+          "prescriptions_filled": 409
+        },
+        {
+          "region": "East",
+          "year_month": "2024-10",
+          "prescriptions_filled": 440
+        },
+        {
+          "region": "East",
+          "year_month": "2024-11",
+          "prescriptions_filled": 448
+        },
+        {
+          "region": "East",
+          "year_month": "2024-12",
+          "prescriptions_filled": 468
+        },
+        {
+          "region": "East",
+          "year_month": "2025-01",
+          "prescriptions_filled": 478
+        },
+        {
+          "region": "East",
+          "year_month": "2025-02",
+          "prescriptions_filled": 406
+        },
+        {
+          "region": "East",
+          "year_month": "2025-03",
+          "prescriptions_filled": 474
+        },
+        {
+          "region": "East",
+          "year_month": "2025-04",
+          "prescriptions_filled": 406
+        },
+        {
+          "region": "East",
+          "year_month": "2025-05",
+          "prescriptions_filled": 481
+        },
+        {
+          "region": "East",
+          "year_month": "2025-06",
+          "prescriptions_filled": 436
+        },
+        {
+          "region": "East",
+          "year_month": "2025-07",
+          "prescriptions_filled": 463
+        },
+        {
+          "region": "East",
+          "year_month": "2025-08",
+          "prescriptions_filled": 442
+        },
+        {
+          "region": "East",
+          "year_month": "2025-09",
+          "prescriptions_filled": 419
+        },
+        {
+          "region": "East",
+          "year_month": "2025-10",
+          "prescriptions_filled": 471
+        },
+        {
+          "region": "East",
+          "year_month": "2025-11",
+          "prescriptions_filled": 466
+        },
+        {
+          "region": "East",
+          "year_month": "2025-12",
+          "prescriptions_filled": 539
+        },
+        {
+          "region": "North",
+          "year_month": "2024-01",
+          "prescriptions_filled": 466
+        },
+        {
+          "region": "North",
+          "year_month": "2024-02",
+          "prescriptions_filled": 450
+        },
+        {
+          "region": "North",
+          "year_month": "2024-03",
+          "prescriptions_filled": 461
+        },
+        {
+          "region": "North",
+          "year_month": "2024-04",
+          "prescriptions_filled": 451
+        },
+        {
+          "region": "North",
+          "year_month": "2024-05",
+          "prescriptions_filled": 441
+        },
+        {
+          "region": "North",
+          "year_month": "2024-06",
+          "prescriptions_filled": 442
+        },
+        {
+          "region": "North",
+          "year_month": "2024-07",
+          "prescriptions_filled": 417
+        },
+        {
+          "region": "North",
+          "year_month": "2024-08",
+          "prescriptions_filled": 455
+        },
+        {
+          "region": "North",
+          "year_month": "2024-09",
+          "prescriptions_filled": 431
+        },
+        {
+          "region": "North",
+          "year_month": "2024-10",
+          "prescriptions_filled": 445
+        },
+        {
+          "region": "North",
+          "year_month": "2024-11",
+          "prescriptions_filled": 415
+        },
+        {
+          "region": "North",
+          "year_month": "2024-12",
+          "prescriptions_filled": 505
+        },
+        {
+          "region": "North",
+          "year_month": "2025-01",
+          "prescriptions_filled": 490
+        },
+        {
+          "region": "North",
+          "year_month": "2025-02",
+          "prescriptions_filled": 485
+        },
+        {
+          "region": "North",
+          "year_month": "2025-03",
+          "prescriptions_filled": 434
+        },
+        {
+          "region": "North",
+          "year_month": "2025-04",
+          "prescriptions_filled": 462
+        },
+        {
+          "region": "North",
+          "year_month": "2025-05",
+          "prescriptions_filled": 493
+        },
+        {
+          "region": "North",
+          "year_month": "2025-06",
+          "prescriptions_filled": 469
+        },
+        {
+          "region": "North",
+          "year_month": "2025-07",
+          "prescriptions_filled": 449
+        },
+        {
+          "region": "North",
+          "year_month": "2025-08",
+          "prescriptions_filled": 477
+        },
+        {
+          "region": "North",
+          "year_month": "2025-09",
+          "prescriptions_filled": 466
+        },
+        {
+          "region": "North",
+          "year_month": "2025-10",
+          "prescriptions_filled": 467
+        },
+        {
+          "region": "North",
+          "year_month": "2025-11",
+          "prescriptions_filled": 464
+        },
+        {
+          "region": "North",
+          "year_month": "2025-12",
+          "prescriptions_filled": 523
+        },
+        {
+          "region": "South",
+          "year_month": "2024-01",
+          "prescriptions_filled": 469
+        },
+        {
+          "region": "South",
+          "year_month": "2024-02",
+          "prescriptions_filled": 415
+        },
+        {
+          "region": "South",
+          "year_month": "2024-03",
+          "prescriptions_filled": 405
+        },
+        {
+          "region": "South",
+          "year_month": "2024-04",
+          "prescriptions_filled": 393
+        },
+        {
+          "region": "South",
+          "year_month": "2024-05",
+          "prescriptions_filled": 402
+        },
+        {
+          "region": "South",
+          "year_month": "2024-06",
+          "prescriptions_filled": 385
+        },
+        {
+          "region": "South",
+          "year_month": "2024-07",
+          "prescriptions_filled": 418
+        },
+        {
+          "region": "South",
+          "year_month": "2024-08",
+          "prescriptions_filled": 438
+        },
+        {
+          "region": "South",
+          "year_month": "2024-09",
+          "prescriptions_filled": 366
+        },
+        {
+          "region": "South",
+          "year_month": "2024-10",
+          "prescriptions_filled": 426
+        },
+        {
+          "region": "South",
+          "year_month": "2024-11",
+          "prescriptions_filled": 373
+        },
+        {
+          "region": "South",
+          "year_month": "2024-12",
+          "prescriptions_filled": 424
+        },
+        {
+          "region": "South",
+          "year_month": "2025-01",
+          "prescriptions_filled": 474
+        },
+        {
+          "region": "South",
+          "year_month": "2025-02",
+          "prescriptions_filled": 412
+        },
+        {
+          "region": "South",
+          "year_month": "2025-03",
+          "prescriptions_filled": 425
+        },
+        {
+          "region": "South",
+          "year_month": "2025-04",
+          "prescriptions_filled": 409
+        },
+        {
+          "region": "South",
+          "year_month": "2025-05",
+          "prescriptions_filled": 467
+        },
+        {
+          "region": "South",
+          "year_month": "2025-06",
+          "prescriptions_filled": 437
+        },
+        {
+          "region": "South",
+          "year_month": "2025-07",
+          "prescriptions_filled": 390
+        },
+        {
+          "region": "South",
+          "year_month": "2025-08",
+          "prescriptions_filled": 439
+        },
+        {
+          "region": "South",
+          "year_month": "2025-09",
+          "prescriptions_filled": 395
+        },
+        {
+          "region": "South",
+          "year_month": "2025-10",
+          "prescriptions_filled": 431
+        },
+        {
+          "region": "South",
+          "year_month": "2025-11",
+          "prescriptions_filled": 401
+        },
+        {
+          "region": "South",
+          "year_month": "2025-12",
+          "prescriptions_filled": 499
+        },
+        {
+          "region": "West",
+          "year_month": "2024-01",
+          "prescriptions_filled": 391
+        },
+        {
+          "region": "West",
+          "year_month": "2024-02",
+          "prescriptions_filled": 355
+        },
+        {
+          "region": "West",
+          "year_month": "2024-03",
+          "prescriptions_filled": 393
+        },
+        {
+          "region": "West",
+          "year_month": "2024-04",
+          "prescriptions_filled": 391
+        },
+        {
+          "region": "West",
+          "year_month": "2024-05",
+          "prescriptions_filled": 385
+        },
+        {
+          "region": "West",
+          "year_month": "2024-06",
+          "prescriptions_filled": 373
+        },
+        {
+          "region": "West",
+          "year_month": "2024-07",
+          "prescriptions_filled": 371
+        },
+        {
+          "region": "West",
+          "year_month": "2024-08",
+          "prescriptions_filled": 384
+        },
+        {
+          "region": "West",
+          "year_month": "2024-09",
+          "prescriptions_filled": 402
+        },
+        {
+          "region": "West",
+          "year_month": "2024-10",
+          "prescriptions_filled": 401
+        },
+        {
+          "region": "West",
+          "year_month": "2024-11",
+          "prescriptions_filled": 403
+        },
+        {
+          "region": "West",
+          "year_month": "2024-12",
+          "prescriptions_filled": 401
+        },
+        {
+          "region": "West",
+          "year_month": "2025-01",
+          "prescriptions_filled": 469
+        },
+        {
+          "region": "West",
+          "year_month": "2025-02",
+          "prescriptions_filled": 372
+        },
+        {
+          "region": "West",
+          "year_month": "2025-03",
+          "prescriptions_filled": 418
+        },
+        {
+          "region": "West",
+          "year_month": "2025-04",
+          "prescriptions_filled": 455
+        },
+        {
+          "region": "West",
+          "year_month": "2025-05",
+          "prescriptions_filled": 447
+        },
+        {
+          "region": "West",
+          "year_month": "2025-06",
+          "prescriptions_filled": 364
+        },
+        {
+          "region": "West",
+          "year_month": "2025-07",
+          "prescriptions_filled": 405
+        },
+        {
+          "region": "West",
+          "year_month": "2025-08",
+          "prescriptions_filled": 391
+        },
+        {
+          "region": "West",
+          "year_month": "2025-09",
+          "prescriptions_filled": 390
+        },
+        {
+          "region": "West",
+          "year_month": "2025-10",
+          "prescriptions_filled": 421
+        },
+        {
+          "region": "West",
+          "year_month": "2025-11",
+          "prescriptions_filled": 430
+        },
+        {
+          "region": "West",
+          "year_month": "2025-12",
+          "prescriptions_filled": 491
+        }
+      ]
+    },
+    {
+      "question_id": "Q02",
+      "answer_text": "December 2025 vs November 2025: Respiratory rose most; Dermatology fell most.",
+      "dax": "EVALUATE\nSUMMARIZECOLUMNS(\n    'Medication'[Therapeutic Category],\n    TREATAS({ \"2025-12\" }, 'Date'[Year Month]),\n    \"Prior Month Fills\", [Prescriptions Filled PM],\n    \"Latest Month Fills\", [Prescriptions Filled],\n    \"Change\", [MoM Change],\n    \"Change %\", [MoM %]\n)",
+      "assumptions": [
+        "Compare fills in the latest complete month in the data (December 2025) with the previous month (November 2025) for each therapeutic category. Rank categories by the absolute change in fills, largest first. Report both months, the change, and the percent change as a fraction (0.25 means 25 percent)."
+      ],
+      "rows": [
+        {
+          "category": "Respiratory",
+          "prior_month_fills": 219,
+          "latest_month_fills": 456,
+          "change": 237,
+          "change_pct": 1.082192
+        },
+        {
+          "category": "Anti-infective",
+          "prior_month_fills": 197,
+          "latest_month_fills": 271,
+          "change": 74,
+          "change_pct": 0.375635
+        },
+        {
+          "category": "Dermatology",
+          "prior_month_fills": 112,
+          "latest_month_fills": 60,
+          "change": -52,
+          "change_pct": -0.464286
+        },
+        {
+          "category": "Cardiovascular",
+          "prior_month_fills": 346,
+          "latest_month_fills": 377,
+          "change": 31,
+          "change_pct": 0.089595
+        },
+        {
+          "category": "Pain and Inflammation",
+          "prior_month_fills": 185,
+          "latest_month_fills": 210,
+          "change": 25,
+          "change_pct": 0.135135
+        },
+        {
+          "category": "Gastrointestinal",
+          "prior_month_fills": 213,
+          "latest_month_fills": 203,
+          "change": -10,
+          "change_pct": -0.046948
+        },
+        {
+          "category": "Diabetes",
+          "prior_month_fills": 253,
+          "latest_month_fills": 246,
+          "change": -7,
+          "change_pct": -0.027668
+        },
+        {
+          "category": "Mental Health",
+          "prior_month_fills": 236,
+          "latest_month_fills": 229,
+          "change": -7,
+          "change_pct": -0.029661
+        }
+      ]
+    },
+    {
+      "question_id": "Q03",
+      "answer_text": "Avg Processing Time (min) by store for all dates. Sunset Mesa is the slowest.",
+      "dax": "EVALUATE\nSUMMARIZECOLUMNS(\n    'Store'[Store Name],\n    \"Avg Processing Time (min)\", [Avg Processing Time (min)]\n)\nORDER BY [Avg Processing Time (min)] DESC",
+      "assumptions": [
+        "Average processing minutes per fill for each store across the full data window (January 2024 to December 2025). Sort slowest first."
+      ],
+      "rows": [
+        {
+          "store": "Sunset Mesa",
+          "avg_processing_minutes": 20.519744
+        },
+        {
+          "store": "Harbor Point",
+          "avg_processing_minutes": 13.169722
+        },
+        {
+          "store": "Granite Park",
+          "avg_processing_minutes": 12.41314
+        },
+        {
+          "store": "Riverbend",
+          "avg_processing_minutes": 12.318225
+        },
+        {
+          "store": "Lakeview",
+          "avg_processing_minutes": 12.077522
+        },
+        {
+          "store": "Oak Terrace",
+          "avg_processing_minutes": 12.043905
+        },
+        {
+          "store": "Bayside",
+          "avg_processing_minutes": 12.014074
+        },
+        {
+          "store": "Magnolia Square",
+          "avg_processing_minutes": 11.567551
+        },
+        {
+          "store": "Fox Run",
+          "avg_processing_minutes": 11.476436
+        },
+        {
+          "store": "Pine Hollow",
+          "avg_processing_minutes": 11.362979
+        },
+        {
+          "store": "Willow Creek",
+          "avg_processing_minutes": 10.933369
+        },
+        {
+          "store": "Stonebridge",
+          "avg_processing_minutes": 10.862511
+        }
+      ]
+    },
+    {
+      "question_id": "Q04",
+      "answer_text": "Stores with Refill Rate Index vs Chain of 1.25 or more in 2025-Q4: Riverbend and Granite Park.",
+      "dax": "EVALUATE\nFILTER(\n    SUMMARIZECOLUMNS(\n        'Store'[Store Name],\n        TREATAS({ \"2025-Q4\" }, 'Date'[Year Quarter]),\n        \"Refill Rate\", [Refill Rate],\n        \"Refill Rate Index vs Chain\", [Refill Rate Index vs Chain]\n    ),\n    [Refill Rate Index vs Chain] >= 1.25\n)\nORDER BY [Refill Rate Index vs Chain] DESC",
+      "assumptions": [
+        "For the latest quarter in the data (October to December 2025), compute each store's refill rate (refills divided by all fills) and its index against the chain-wide refill rate for the same quarter. A store is unusually high when its index is 1.25 or more. Return only the flagged stores. Rates are fractions (0.8 means 80 percent)."
+      ],
+      "rows": [
+        {
+          "store": "Riverbend",
+          "refill_rate": 0.795737,
+          "refill_rate_index": 1.368062
+        },
+        {
+          "store": "Granite Park",
+          "refill_rate": 0.781633,
+          "refill_rate_index": 1.343813
+        }
+      ]
+    },
+    {
+      "question_id": "Q05",
+      "answer_text": "December 2025 compared with November 2025 (previous month).",
+      "dax": "EVALUATE\nROW(\n    \"Period\", \"2025-12\",\n    \"Prescriptions Filled\", CALCULATE([Prescriptions Filled], 'Date'[Year Month] = \"2025-12\"),\n    \"Previous Period Fills\", CALCULATE([Prescriptions Filled PM], 'Date'[Year Month] = \"2025-12\"),\n    \"Change\", CALCULATE([MoM Change], 'Date'[Year Month] = \"2025-12\"),\n    \"Change %\", CALCULATE([MoM %], 'Date'[Year Month] = \"2025-12\")\n)",
+      "assumptions": [
+        "Compare total fills in the latest complete month in the data (December 2025) with the previous month (November 2025). Report the period as YYYY-MM, both totals, the change, and the percent change as a fraction."
+      ],
+      "rows": [
+        {
+          "period": "2025-12",
+          "prescriptions_filled": 2052,
+          "previous_period_fills": 1761,
+          "change": 291,
+          "change_pct": 0.165247
+        }
+      ]
+    }
+  ],
+  "grade": {
+    "total": 10,
+    "max": 10,
+    "graded": "2026-01-15T00:00:00Z",
+    "by_question": {
+      "Q01": {
+        "score": 2,
+        "reason": "matches the expected answer",
+        "matched_rows": 96,
+        "expected_rows": 96
+      },
+      "Q02": {
+        "score": 2,
+        "reason": "matches the expected answer",
+        "matched_rows": 8,
+        "expected_rows": 8
+      },
+      "Q03": {
+        "score": 2,
+        "reason": "matches the expected answer",
+        "matched_rows": 12,
+        "expected_rows": 12
+      },
+      "Q04": {
+        "score": 2,
+        "reason": "matches the expected answer",
+        "matched_rows": 2,
+        "expected_rows": 2
+      },
+      "Q05": {
+        "score": 2,
+        "reason": "matches the expected answer",
+        "matched_rows": 1,
+        "expected_rows": 1
+      }
+    }
+  }
+}

@@ -1,0 +1,124 @@
+---
+title: Glossary
+description: Definitions for Power BI, Copilot customization, validation, and lab workflow terms used in the self-paced lab.
+---
+
+## Agent mode
+
+VS Code chat mode where Copilot can plan, edit files, run commands, and use tools after you approve them. You first check it in [Lab 00](/labs/00-workstation-setup/#step-6).
+
+## AGENTS.md
+
+A repository guide for AI coding agents. This repo's root `AGENTS.md` summarizes setup, validation, boundaries, and custom agents. You read it in [Lab 03](/labs/03-instructions/#step-1).
+
+## APM
+
+Agent Package Manager. This lab uses it to install Skills for Fabric and discuss sharing skills. See [APM and plugins](/reference/apm-and-plugins/) and [Lab 06](/labs/06-skills-and-assessor/).
+
+## Checkpoint
+
+A known-good upstream tag that can restore the model state for a lab. Use `Restore-LabCheckpoint.ps1` from [Scripts](/reference/scripts/) and the catch-up block on lab pages.
+
+## Copilot CLI
+
+GitHub Copilot's terminal surface. This lab uses it with hooks in [Lab 11](/labs/11-copilot-cli-and-hooks/).
+
+## Copilot cloud agent
+
+A GitHub-hosted Copilot agent that researches, plans, changes code in its own environment, and can open a pull request. See [Lab 13](/labs/13-cloud-agent/).
+
+## Copilot code review
+
+Copilot's pull request review feature. It reviews diffs, can use repo instructions, and consumes paid-plan or organization-enabled access. See [Lab 12](/labs/12-pull-request-and-code-review/).
+
+## Custom agent
+
+A repo-defined agent in `.github/agents/*.agent.md` with a description, tools, instructions, and optional handoffs. See [Agents](/reference/agents/) and [Lab 06](/labs/06-skills-and-assessor/).
+
+## Custom instructions
+
+Guidance files Copilot reads as context. Repo-wide instructions live in `.github/copilot-instructions.md`; path instructions live under `.github/instructions/`. See [Lab 03](/labs/03-instructions/).
+
+## Display folder
+
+A Power BI measure organization property. The lab requires measure display folders such as Volume, Refills, Processing, and Time Comparison. See [Lab 08](/labs/08-relationships-and-measures/).
+
+## Grader
+
+The deterministic Python evaluator that scores question run files against expected answers. See [Business questions](/reference/business-questions/) and [Lab 05](/labs/05-question-tester-before/).
+
+## Handoff
+
+A custom agent button that switches to another agent and pre-fills a prompt. You use the assessor-to-improver handoff in [Lab 07](/labs/07-handoffs-names-descriptions/).
+
+## Hook
+
+A deterministic guardrail that runs on Copilot events such as pre-tool-use or post-tool-use. Hooks can deny risky edits and run lint. See [Hooks](/reference/hooks/) and [Lab 11](/labs/11-copilot-cli-and-hooks/).
+
+## LineageTag
+
+A stable Power BI object identifier stored in TMDL. Keep it unchanged when renaming objects so Power BI can track identity. See [Lab 07](/labs/07-handoffs-names-descriptions/#step-4).
+
+## Marked date table
+
+A Power BI table designated as the canonical date table for time intelligence. The lab adds this in [Lab 08](/labs/08-relationships-and-measures/).
+
+## MCP
+
+Model Context Protocol, a way for Copilot to use external tools with approval. The lab connects Power BI Modeling MCP in [Lab 04](/labs/04-connect-mcp/).
+
+## Measure
+
+A DAX calculation stored in the semantic model, usually used instead of implicit aggregations. The core measures are added in [Lab 08](/labs/08-relationships-and-measures/).
+
+## Path instructions
+
+`.instructions.md` files with an `applyTo` glob, such as `fabric/**/*.tmdl` or `rules/**`. You create one in [Lab 03](/labs/03-instructions/#step-4).
+
+## PBIP
+
+Power BI Project, the folder-based format for a report and semantic model. You open `fabric/ContosoPharmacy.pbip` in [Lab 02](/labs/02-meet-the-baseline-model/).
+
+## PBIR
+
+Power BI report files as JSON. This repo stores one `visual.json` per visual. Report field bindings are fixed in [Lab 07](/labs/07-handoffs-names-descriptions/#step-6).
+
+## Power BI Desktop
+
+The Windows app that opens PBIP projects, refreshes the local model, and hosts the local Analysis Services instance for Desktop MCP and DAX tests. You install it in [Lab 00](/labs/00-workstation-setup/#step-7).
+
+## Power BI Modeling MCP
+
+An MCP server that lets Copilot inspect or modify a Power BI model through Desktop or a PBIP folder. See [MCP](/reference/mcp/) and [Lab 04](/labs/04-connect-mcp/).
+
+## Prompt file
+
+A reusable prompt in `.github/prompts/*.prompt.md`, run with a slash command such as `/assess-model`. See [Prompts](/reference/prompts/).
+
+## Question run
+
+A JSON file under `evaluation/runs/` that records answers, assumptions, and grades for the five business questions. See [Lab 05](/labs/05-question-tester-before/) and [Lab 10](/labs/10-question-tester-after/).
+
+## Semantic model
+
+The Power BI model that defines tables, columns, relationships, measures, and metadata. In this repo it lives under `fabric/ContosoPharmacy.SemanticModel/definition/` as TMDL.
+
+## Skill
+
+A reusable Copilot capability in `.github/skills/<name>/SKILL.md`, loaded when its description matches the task. See [Skills](/reference/skills/) and [Lab 06](/labs/06-skills-and-assessor/).
+
+## Skills for Fabric
+
+Microsoft-provided skills for Fabric and Power BI authoring. This repo installs the semantic-model-authoring skill with APM in [Lab 06](/labs/06-skills-and-assessor/).
+
+## Synthetic data
+
+Generated, deterministic, fictional pharmacy data. It lets the lab run without a Fabric tenant or real data. See [Synthetic data model](/reference/synthetic-data-model/) and [Lab 01](/labs/01-get-your-copy/#step-5).
+
+## TMDL
+
+Tabular Model Definition Language, the text format for Power BI semantic model objects. You inspect it in [Lab 02](/labs/02-meet-the-baseline-model/) and edit it in later labs.
+
+## Tool approval
+
+The prompt you see before an agent runs a terminal command, edits a file, or uses an MCP tool. It gives you a chance to read the action before allowing it. See [Lab 04](/labs/04-connect-mcp/) and [Lab 11](/labs/11-copilot-cli-and-hooks/).

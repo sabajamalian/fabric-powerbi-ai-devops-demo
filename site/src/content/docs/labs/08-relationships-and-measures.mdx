@@ -1,0 +1,424 @@
+---
+title: "Lab 08: Relationships, date table, and measures"
+description: "Use prompt files to fix relationships, mark the Date table, add core measures, and validate the improved model."
+sidebar:
+  label: "08. Relationships and measures"
+lab:
+  number: 8
+  durationMinutes: 45
+  level: intermediate
+  platforms: [windows, macos-file-mode]
+  requiresDesktop: false
+  surfaces: [vscode, desktop]
+  primitives: [custom-agent, prompt-file, skill, hook]
+  startCheckpoint: lab07-complete
+  endCheckpoint: lab08-complete
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import LabMeta from '~/components/LabMeta.astro';
+import CatchUp from '~/components/CatchUp.astro';
+import Checkpoint from '~/components/Checkpoint.astro';
+import VerifyStep from '~/components/VerifyStep.astro';
+import KnowledgeCheck from '~/components/KnowledgeCheck.astro';
+import WhatVaries from '~/components/WhatVaries.astro';
+import RepoFile from '~/components/RepoFile.astro';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+import NextLab from '~/components/NextLab.astro';
+import FeedbackLink from '~/components/FeedbackLink.astro';
+
+## At a glance
+
+<LabMeta />
+
+## Why this matters
+
+Business names make a model readable. Relationships and measures make its answers correct. The baseline model repeats category totals because Medication does not filter Prescription Fill, and it leaves time comparisons up to whichever DAX the agent guesses. In this lab you add the semantic structure that business questions need: single-direction relationships, a marked Date table, decoded fill type, and twelve explicit measures.
+
+## Concepts
+
+- **Single-direction filter:** dimensions filter facts, but facts do not filter dimensions. This keeps totals predictable and avoids ambiguous paths.
+- **Marked Date table:** a real Date table with a key date column. Time intelligence measures use it instead of hidden auto date/time tables.
+- **Auto date/time off:** the model should not contain hidden local date tables. One shared Date table controls calendar logic.
+- **Explicit measure:** a named DAX calculation with a description, format string, and display folder. AI tools should use measures instead of implicit sums.
+- **Decoded column:** a readable calculated column, such as `Fill Type`, that turns raw codes like `N` and `R` into business words.
+
+## Before you begin
+
+- You finished [Lab 07](/labs/07-handoffs-names-descriptions/) on branch `feature/ai-ready-names`.
+- The model has business table names: Date, Store, Medication, and Prescription Fill.
+- `out/assessment.md` still exists from Lab 06.
+- Close Power BI Desktop before file edits. Reopen it only when a step asks you to check visuals or DAX.
+
+<CatchUp />
+
+## Steps
+
+### Step 1. Confirm you are starting from the Lab 07 model
+
+Run the Lab 07 checks first. Lab 08 assumes the rename work is complete.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git branch --show-current
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 07
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git branch --show-current
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 07
+```
+
+</TabItem>
+</Tabs>
+
+Stay on `feature/ai-ready-names` unless your facilitator tells you to branch again. This lab adds the next commit on the same feature branch.
+
+**You should see:** the current branch is not `main`, and Lab 07 passes. If it does not, restore `lab07-complete` with the catch-up command above.
+
+<Checkpoint lab="08" step="1" />
+
+### Step 2. Fix relationships with the prompt file
+
+In Copilot Chat:
+
+1. Open Copilot Chat: **Ctrl+Alt+I** (macOS: **Ctrl+Cmd+I**), or **View > Chat**.
+2. Switch to **Agent** mode.
+3. Pick **model-improver**.
+4. Type `/fix-relationships-and-date-table` and press **Enter**.
+5. When it asks about Desktop, answer that Desktop is closed.
+6. Approve validation commands after you read them.
+
+The prompt defines the required relationships and single-direction filters:
+
+<RepoFile path=".github/prompts/fix-relationships-and-date-table.prompt.md" />
+
+The required objects file is what the lab check uses:
+
+<RepoFile path="rules/required-model-objects.yaml" lines="19-26" />
+
+Run the targeted check:
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 08 -Only L08-relationships
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 08 -Only L08-relationships
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** three relationships from Prescription Fill to Date, Store, and Medication. Each relationship is many-to-one and filters in one direction, from the dimension to Prescription Fill.
+
+<WhatVaries mustMatch={['Prescription Fill relates to Date on Fill Date to Date', 'Prescription Fill relates to Store on Store Key', 'Prescription Fill relates to Medication on Medication Key', 'No relationship is bidirectional']}>
+The agent may edit `relationships.tmdl` directly or use MCP if Desktop is open. The final relationship set must match the prompt.
+</WhatVaries>
+
+<Checkpoint lab="08" step="2" />
+
+### Step 3. Mark the Date table and turn off auto date/time
+
+Let the same prompt finish the Date table work. If it stopped after relationships, send:
+
+```text
+Continue the /fix-relationships-and-date-table work. Mark the Date table, set sort-by columns, add the Calendar hierarchy, hide sort helpers, and turn off auto date/time.
+```
+
+The target state is in the rules file:
+
+<RepoFile path="rules/required-model-objects.yaml" lines="6-18" />
+
+Run the targeted check:
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 08 -Only L08-date-table
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 08 -Only L08-date-table
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** `PASS L08-date-table`. In the TMDL, Date has `dataCategory: Time`, Date[Date] is the key, Month sorts by Month Number, Year Month sorts by Year Month Number, Day of Week sorts by Day of Week Number, and auto date/time is off in `model.tmdl`.
+
+<Checkpoint lab="08" step="3" />
+
+### Step 4. Add the core measures and Fill Type
+
+Run the second prompt:
+
+```text
+/add-core-measures
+```
+
+The prompt lists the exact measure names, folders, formats, and the Fill Type requirement:
+
+<RepoFile path=".github/prompts/add-core-measures.prompt.md" />
+
+The convention rules require the same twelve measures:
+
+<RepoFile path="rules/required-model-objects.yaml" lines="28-34" />
+
+Run the targeted checks:
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 08 -Only L08-measures,L08-fill-type
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 08 -Only L08-measures,L08-fill-type
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** all twelve required measures on Prescription Fill, with descriptions, format strings, and display folders. You should also see a visible `Fill Type` column that returns `New` for `N` and `Refill` for `R`, while `Fill Type Code` is hidden.
+
+<WhatVaries mustMatch={['All 12 required measures exist with exact names', 'Measures have descriptions, format strings, and display folders', 'Fill Type decodes N to New and R to Refill', 'Fill Type Code is hidden']}>
+The DAX can vary as long as the measures pass the rule checks and later DAX tests. The agent should use `DIVIDE` for ratios and build measures from base measures.
+</WhatVaries>
+
+<Checkpoint lab="08" step="4" />
+
+### Step 5. Check category totals in Desktop
+
+<PlatformBadge kind="windows-only" />
+
+1. Open `fabric\ContosoPharmacy.pbip` in Power BI Desktop.
+2. Select **Home > Refresh**.
+3. Recreate the quick matrix from [Lab 02](/labs/02-meet-the-baseline-model/): rows by `Medication[Therapeutic Category]`, month from Date, and `[Prescriptions Filled]` as the value.
+4. Filter to December 2025, or compare November and December if you want to mirror Q02.
+
+This is the visible proof for the Medication relationship. In the baseline, each category could show the same total because Medication did not filter Prescription Fill. After this lab, category totals differ and add up to the month total.
+
+**You should see:** category rows with different prescription-fill counts, not the same repeated total for every category. The Respiratory category is the largest December 2025 change when compared with November 2025.
+
+<Aside type="note" title="No Desktop?">
+Skip this visual check. The relationship check in step 2 and the DAX tests in step 7 are the deterministic versions of the same idea.
+</Aside>
+
+<Checkpoint lab="08" step="5" />
+
+### Step 6. Run lint and report-binding validation
+
+Close Desktop before running file validation, so it does not rewrite the model while you inspect diffs.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/Invoke-Validation.ps1 -Only tmdl,bindings
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 08 -Only L08-lint
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/Invoke-Validation.ps1 -Only tmdl,bindings
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 08 -Only L08-lint
+```
+
+</TabItem>
+</Tabs>
+
+The model-improver agent is also told to validate after every step:
+
+<RepoFile path=".github/agents/model-improver.agent.md" lines="40-48" />
+
+**You should see:** `PASS tmdl`, report bindings pass, and `PASS L08-lint`. If report bindings fail, ask the improver to rebind visuals that still point at raw columns or implicit aggregations.
+
+<Checkpoint lab="08" step="6" />
+
+### Step 7. Run the DAX question tests in Desktop
+
+<PlatformBadge kind="windows-only" /> <PlatformBadge kind="optional" />
+
+The DAX test script runs the reference DAX against the model open in Desktop. It is optional because it requires Windows and downloads ADOMD.NET the first time only when you pass `-AllowDownload`.
+
+<RepoFile path="scripts/Invoke-DaxQuestionTests.ps1" lines="1-23" />
+
+<RepoFile path="scripts/Invoke-DaxQuestionTests.ps1" lines="35-69" />
+
+1. Open `fabric\ContosoPharmacy.pbip` in Power BI Desktop.
+2. Select **Home > Refresh**.
+3. Run the first command with `-AllowDownload` if `.tools/adomd/` is not present.
+4. Run it again without the flag.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/Invoke-DaxQuestionTests.ps1 -AllowDownload
+pwsh ./scripts/Invoke-DaxQuestionTests.ps1
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 08 -Only L08-dax-tests
+```
+
+If Desktop is running but the script finds the wrong instance, pass the port explicitly:
+
+```powershell
+pwsh ./scripts/Invoke-DaxQuestionTests.ps1 -Port <desktop-port>
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/Invoke-DaxQuestionTests.ps1
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 08 -Only L08-dax-tests
+```
+
+</TabItem>
+</Tabs>
+
+This repo does not currently ship a `fabric/ContosoPharmacy.SemanticModel/DAXQueries/` folder. The script gets the reference DAX from the lab tooling and writes pass or fail results without printing the hidden queries.
+
+**You should see:** on Windows, `out/dax-tests.json` with all five questions marked `PASS`, then `PASS L08-dax-tests`. On macOS, the script prints that DAX tests need Power BI Desktop and skips.
+
+<Checkpoint lab="08" step="7" />
+
+### Step 8. Commit the model improvements
+
+Review the Source Control view (**Ctrl+Shift+G**, or **View > Source Control**) before you commit. Expect changes under `fabric/ContosoPharmacy.SemanticModel/` and possibly `fabric/ContosoPharmacy.Report/` if visuals were rebound.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+git status --short
+git add fabric
+git commit -m "Add relationships date table and measures"
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+git status --short
+git add fabric
+git commit -m "Add relationships date table and measures"
+```
+
+</TabItem>
+</Tabs>
+
+**You should see:** one commit on `feature/ai-ready-names`. `out/dax-tests.json` and `.tools/adomd/` stay untracked or ignored local outputs.
+
+<Checkpoint lab="08" step="8" />
+
+## Verify your work
+
+<VerifyStep lab="08" />
+
+## Troubleshooting
+
+<details>
+<summary>The relationship check still says Medication is missing</summary>
+
+Ask the improver to inspect `definition/relationships.tmdl` and add the relationship from `'Prescription Fill'[Medication Key]` to `'Medication'[Medication Key]`. Then rerun `pwsh ./scripts/Test-ModelConventions.ps1 -Rule C07,C08`.
+
+</details>
+
+<details>
+<summary>Date measures return blank</summary>
+
+Check that Date is marked as the date table and that the relationship uses Prescription Fill[Fill Date] to Date[Date]. Also confirm auto date/time is off. Time-intelligence measures should use the Date table, not hidden local date tables.
+
+</details>
+
+<details>
+<summary>The measure check reports a name mismatch</summary>
+
+Use the exact names from `/add-core-measures`. `MoM %` is not the same as `MoM Percent`, and `Prescriptions Filled PM` is not the same as `Previous Month Fills`. Rename the measure and rebind any visuals that used the wrong name.
+
+</details>
+
+<details>
+<summary>Invoke-DaxQuestionTests.ps1 cannot find Desktop</summary>
+
+Open `fabric\ContosoPharmacy.pbip`, refresh it, and wait until the model is loaded. The script finds the newest `msmdsrv.port.txt` under the Power BI Desktop Analysis Services workspace folders. If you have multiple Desktop windows open, close the extras or pass `-Port <desktop-port>`.
+
+</details>
+
+<details>
+<summary>The ADOMD.NET download fails</summary>
+
+The first run with `-AllowDownload` downloads from `nuget.org` into `.tools/adomd/` and checks a pinned SHA-512 hash. If your network blocks NuGet, skip the optional DAX test and rely on the TMDL, binding, and convention checks until you can run on a network that allows the package.
+
+</details>
+
+## Knowledge check
+
+<KnowledgeCheck
+	question="Why should relationship filters flow from Date, Store, and Medication to Prescription Fill only?"
+	options={[
+		'Single-direction dimension-to-fact filters keep totals predictable and avoid ambiguous paths.',
+		'Power BI Desktop cannot save bidirectional relationships.',
+		'Copilot ignores bidirectional relationships.',
+	]}
+	answer={0}
+	explanation="Dimensions should filter the fact table. Bidirectional filters can make unrelated slicers and totals interact in surprising ways."
+/>
+
+<KnowledgeCheck
+	question="Why add explicit measures instead of relying on implicit column aggregation?"
+	options={[
+		'Measures encode business logic, names, descriptions, formats, and display folders for people and AI tools.',
+		'Implicit aggregation is disabled in every Power BI model.',
+		'Measures are required only for visuals, not for DAX queries.',
+	]}
+	answer={0}
+	explanation="An explicit measure tells the agent exactly how to count fills, compare periods, and calculate rates. Implicit sums often pick the wrong aggregation."
+/>
+
+<KnowledgeCheck
+	question="What does the Fill Type column fix?"
+	options={[
+		'It decodes raw N and R codes into New and Refill and lets the raw code stay hidden.',
+		'It creates the Date relationship.',
+		'It stores the DAX test results.',
+	]}
+	answer={0}
+	explanation="Readable decoded columns are easier for analysts and AI tools. The raw code remains available to DAX but hidden from report authors."
+/>
+
+## Recap and next
+
+You fixed the structural problems that made the baseline answers weak: missing and bidirectional relationships, an unmarked Date table, raw fill-type codes, and missing measures. The model now has the core DAX needed for volume, refills, processing time, and time comparison. Next you add AI-facing metadata so Copilot and Fabric data agents understand how to use those objects.
+
+<NextLab current="08" />
+
+## Go further
+
+- Ask model-reviewer to review the commit before you move on: "Review the Lab 08 changes against main and focus on relationships, Date table settings, and measures."
+- Open the DAX for `Refill Rate Index vs Chain` and explain why it removes Store filters but keeps the current period.
+- Add a simple report visual that uses `[High Refill Activity Flag]`, then run `pwsh ./scripts/Test-ReportBindings.ps1`.
+
+<FeedbackLink />

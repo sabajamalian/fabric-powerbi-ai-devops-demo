@@ -1,0 +1,97 @@
+---
+import { getCollection } from 'astro:content';
+import { tracks } from '../lib/repo';
+import { url } from '../lib/url';
+
+const labs = (await getCollection('docs', (e) => Boolean(e.data.lab)))
+	.map((e) => ({
+		number: String(e.data.lab!.number).padStart(2, '0'),
+		title: e.data.title,
+		href: url(e.id),
+		steps: (e.body?.match(/^### Step \d+\./gm) ?? []).length,
+		minutes: e.data.lab!.durationMinutes,
+	}))
+	.sort((a, b) => a.number.localeCompare(b.number));
+const trackLabs = Object.fromEntries(Object.entries(tracks).map(([k, t]) => [k, t.labs]));
+const trackNames = Object.fromEntries(Object.entries(tracks).map(([k, t]) => [k, t.label]));
+---
+
+<div class="progress-summary not-content" data-tracks={JSON.stringify(trackLabs)} data-names={JSON.stringify(trackNames)}>
+	<p class="progress-next" aria-live="polite">Your progress loads here. It needs JavaScript and stays in this browser.</p>
+	<table>
+		<thead>
+			<tr><th>Lab</th><th>Steps done</th><th>Time</th></tr>
+		</thead>
+		<tbody>
+			{
+				labs.map((lab) => (
+					<tr data-lab={lab.number} data-steps={lab.steps} data-href={lab.href} data-title={lab.title}>
+						<td><a href={lab.href}>{lab.title}</a></td>
+						<td class="progress-count">0 of {lab.steps}</td>
+						<td>{lab.minutes} min</td>
+					</tr>
+				))
+			}
+		</tbody>
+	</table>
+	<div class="progress-actions">
+		<button type="button" data-action="export">Export progress</button>
+		<label class="progress-import">Import progress <input type="file" accept="application/json" data-action="import" /></label>
+		<button type="button" data-action="reset">Reset progress</button>
+	</div>
+	<p class="progress-message" aria-live="polite"></p>
+</div>
+
+<script>
+	import { TRACK_KEY, exportState, get, importState, resetAll, stepsDone } from '../lib/progress';
+
+	const root = document.querySelector<HTMLElement>('.progress-summary');
+	if (root) {
+		const tracks: Record<string, string[]> = JSON.parse(root.dataset.tracks!);
+		const names: Record<string, string> = JSON.parse(root.dataset.names!);
+		const message = root.querySelector<HTMLParagraphElement>('.progress-message')!;
+		const render = () => {
+			const track = get(TRACK_KEY) ?? 'full';
+			const inTrack = new Set(tracks[track] ?? []);
+			let next: HTMLElement | null = null;
+			for (const row of root.querySelectorAll<HTMLTableRowElement>('tr[data-lab]')) {
+				const lab = row.dataset.lab!;
+				const total = Number(row.dataset.steps);
+				const done = Math.min(stepsDone(lab), total);
+				row.querySelector('.progress-count')!.textContent = `${done} of ${total}${done === total && total ? ' (done)' : ''}`;
+				row.classList.toggle('progress-off-track', !inTrack.has(lab));
+				if (!next && inTrack.has(lab) && done < total) next = row;
+			}
+			const nextText = root.querySelector('.progress-next')!;
+			nextText.innerHTML = next
+				? `Track: ${names[track]}. Suggested next: <a href="${next.dataset.href}">${next.dataset.title}</a>.`
+				: `Track: ${names[track]}. Every lab on this track is ticked off.`;
+		};
+		root.querySelector('[data-action="export"]')!.addEventListener('click', () => {
+			const blob = new Blob([exportState()], { type: 'application/json' });
+			const a = Object.assign(document.createElement('a'), {
+				href: URL.createObjectURL(blob),
+				download: 'contoso-pharmacy-lab-progress.json',
+			});
+			a.click();
+			URL.revokeObjectURL(a.href);
+		});
+		root.querySelector<HTMLInputElement>('[data-action="import"]')!.addEventListener('change', async (event) => {
+			const file = (event.target as HTMLInputElement).files?.[0];
+			if (!file) return;
+			try {
+				message.textContent = `Imported ${importState(await file.text())} saved items.`;
+			} catch (error) {
+				message.textContent = (error as Error).message;
+			}
+		});
+		root.querySelector('[data-action="reset"]')!.addEventListener('click', () => {
+			if (confirm('Clear every tick box, your track, and saved answers on this site?')) {
+				resetAll();
+				message.textContent = 'Progress cleared.';
+			}
+		});
+		window.addEventListener('cpdemo:change', render);
+		render();
+	}
+</script>

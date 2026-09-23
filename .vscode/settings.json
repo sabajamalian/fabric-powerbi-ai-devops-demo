@@ -1,0 +1,41 @@
+{
+  // Copilot customization: these are the defaults today, set explicitly so the lab behaves the same
+  // if a default changes.
+  "chat.useAgentsMdFile": true,
+  "chat.includeApplyingInstructions": true,
+  "chat.includeReferencedInstructions": true,
+  "chat.useHooks": true,
+
+  // Start MCP servers only after you've run them once yourself (Lab 04).
+  "chat.mcp.autostart": "onlyNew",
+
+  // TMDL must be indented with tabs.
+  "[tmdl]": {
+    "editor.insertSpaces": false,
+    "editor.detectIndentation": false,
+    "editor.tabSize": 4
+  },
+
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.exclude": {
+    "**/.pbi/cache.abf": true
+  },
+
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["tools/python/tests"],
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+
+  "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
+  "powershell.codeFormatting.preset": "OTBS",
+
+  "yaml.schemas": {
+    "./evaluation/questions.schema.json": "evaluation/questions.yaml"
+  },
+  "json.schemas": [
+    { "fileMatch": ["evaluation/runs/*.json"], "url": "./evaluation/run.schema.json" }
+  ]
+}

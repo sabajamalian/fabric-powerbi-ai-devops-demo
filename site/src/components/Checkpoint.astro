@@ -1,0 +1,21 @@
+---
+import { labNumber } from '../lib/repo';
+
+interface Props {
+	lab: string | number;
+	step: string | number;
+	label?: string;
+}
+const { lab, step, label } = Astro.props;
+const key = `cpdemo.v1.${labNumber(lab)}.${step}`;
+---
+
+<label class="cp-check not-content">
+	<input type="checkbox" data-cp-key={key} />
+	<span>{label ?? `I finished step ${step}`}</span>
+</label>
+
+<script>
+	import { initCheckboxes } from '../lib/progress';
+	initCheckboxes();
+</script>

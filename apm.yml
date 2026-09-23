@@ -1,0 +1,28 @@
+# APM (Agent Package Manager) manifest for the Contoso Pharmacy lab.
+#
+# Consume: installs the third-party Skills for Fabric skill this lab uses, pinned to a release.
+#   apm install --only apm --target copilot
+# --only apm skips the MCP servers that Skills for Fabric declares; this repo configures its own
+# in .vscode/mcp.json. See Lab 06.
+#
+# Publish: this lab's skills live in .github/skills (the folder the lab teaches), which APM treats
+# as build output, so this manifest does not export them as a package. Other repos install one
+# skill at a time by subdirectory instead, for example:
+#   apm install sabajamalian/fabric-powerbi-ai-devops-demo/.github/skills/pharmacy-model-conventions
+# See Lab 14.
+name: fabric-powerbi-ai-devops-demo
+version: 1.0.0
+description: Copilot skills, agents, and prompts for making a Power BI semantic model AI-ready, from the Contoso Pharmacy lab. Synthetic data only.
+license: MIT
+repository: https://github.com/sabajamalian/fabric-powerbi-ai-devops-demo
+keywords: [power-bi, tmdl, semantic-model, copilot, skills]
+
+targets:
+  - copilot
+
+dependencies:
+  apm:
+    - git: https://github.com/microsoft/skills-for-fabric.git
+      ref: v0.3.17
+      skills:
+        - semantic-model-authoring

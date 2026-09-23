@@ -1,0 +1,70 @@
+---
+title: Clean up
+description: "Short cleanup checklist for local lab files, optional installs, GitHub copies, and browser progress."
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import PlatformBadge from '~/components/PlatformBadge.astro';
+
+This is the short version of [Lab 15: Clean up and next steps](/labs/15-clean-up/). Use the lab page when you want guided steps and verification.
+
+## Remove the Windows data junction
+
+<PlatformBadge kind="windows-only" /> <PlatformBadge kind="optional" />
+
+Close Power BI Desktop, then run:
+
+```powershell
+pwsh ./scripts/Set-LocalDataLink.ps1 -Remove
+```
+
+This removes `C:\ContosoPharmacyDemo\data` when it is a junction. It does not delete `data/generated/`.
+
+## Report local outputs
+
+Run:
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```powershell
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 15
+```
+
+</TabItem>
+<TabItem label="macOS">
+
+```bash
+pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab 15
+```
+
+</TabItem>
+</Tabs>
+
+The check reports local outputs such as `out/`, `.tools/`, `apm_modules/`, and `evaluation/runs/local-*.json`. It deletes nothing.
+
+## Optional installs
+
+Remove only tools you installed just for the lab and do not need elsewhere:
+
+- Copilot CLI, using the package manager you used to install it.
+- APM CLI, for example `winget uninstall Microsoft.APM` on Windows or `brew uninstall apm` on macOS if you used those installers.
+- VS Code extensions from **View > Extensions**.
+- `.venv`, if you no longer need local validation.
+- `site/node_modules`, if you no longer preview the lab site.
+
+## Local clone
+
+If you are done with the repo, delete the local clone folder after saving any branches or files you want. Do not delete it while Power BI Desktop has the PBIP open.
+
+## GitHub template copy
+
+If you want to delete your GitHub copy, open the repo on GitHub and go to **Settings > General > Danger Zone > Delete this repository**. This is optional and permanent.
+
+## Browser progress
+
+Open [/progress/](/progress/) and choose **Reset progress** to clear local checkboxes in this browser.
+
+## Nothing to revoke
+
+The lab creates no Fabric workspace, service principal, cloud credential, or Azure resource. If you added your own secrets while experimenting, remove them from **Settings > Secrets and variables** and the external system.

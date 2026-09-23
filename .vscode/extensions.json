@@ -1,0 +1,14 @@
+{
+  // Recommended extensions for the Contoso Pharmacy lab. VS Code offers to install them when you
+  // open the folder. Nothing installs automatically.
+  "recommendations": [
+    "GitHub.copilot-chat",
+    "analysis-services.TMDL",
+    "analysis-services.powerbi-modeling-mcp",
+    "ms-vscode.powershell",
+    "ms-python.python",
+    "charliermarsh.ruff",
+    "redhat.vscode-yaml",
+    "astro-build.astro-vscode"
+  ]
+}

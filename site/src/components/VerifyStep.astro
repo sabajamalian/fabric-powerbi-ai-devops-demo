@@ -1,0 +1,62 @@
+---
+import { Code, Tabs, TabItem } from '@astrojs/starlight/components';
+import { checksFor, contract, labNumber } from '../lib/repo';
+
+interface Props {
+	lab: string | number;
+}
+const lab = labNumber(Astro.props.lab);
+const checks = checksFor(lab);
+if (!checks.length) throw new Error(`VerifyStep: lab/checks.yaml has no checks for lab ${lab}.`);
+const command = `pwsh ./scripts/lab/Test-LabProgress.ps1 -Lab ${lab}`;
+const width = Math.max(...checks.map((c) => c.id.length)) + 2;
+const required = checks.filter((c) => c.required !== false);
+const sample = [
+	...checks.map((c) => `PASS  ${c.id.padEnd(width)}${c.description}`),
+	'',
+	`Lab ${lab}: ${checks.length} of ${checks.length} checks passed.`,
+].join('\n');
+const slug = contract.labs[lab]?.slug;
+---
+
+<div class="verify-step">
+	<p>Run this from the repo root in a PowerShell 7 terminal (<strong>Terminal &gt; New Terminal</strong> in VS Code):</p>
+	<Tabs syncKey="os">
+		<TabItem label="Windows">
+			<Code code={command} lang="powershell" />
+		</TabItem>
+		<TabItem label="macOS">
+			<Code code={command} lang="bash" />
+			<p>Checks marked Windows only print SKIP on macOS. SKIP doesn't count as a failure.</p>
+		</TabItem>
+	</Tabs>
+	<p>When everything is done you should see:</p>
+	<Code code={sample} lang="txt" title="Expected output" />
+	<p>
+		Each FAIL line prints a hint and a link back to the step on this page that fixes it. The command exits with
+		code 0 when every required check passes.
+	</p>
+	<table>
+		<thead>
+			<tr><th>Check</th><th>What it looks at</th><th>If it fails</th></tr>
+		</thead>
+		<tbody>
+			{
+				checks.map((c) => (
+					<tr>
+						<td>
+							<code>{c.id}</code>
+							{c.required === false && <em> (optional)</em>}
+							{c.windows_only && <em> (Windows only)</em>}
+						</td>
+						<td>{c.description}</td>
+						<td>
+							{c.hint} {slug && <a href={`#${c.anchor}`}>Go to {c.anchor.replace('-', ' ')}</a>}
+						</td>
+					</tr>
+				))
+			}
+		</tbody>
+	</table>
+	{required.length < checks.length && <p>Optional checks can FAIL without failing the lab.</p>}
+</div>
