@@ -4,6 +4,7 @@
 # Files that must be byte-identical everywhere (generated data, expected answers, shell scripts).
 *.csv                     text eol=lf
 evaluation/expected/*.json text eol=lf
+data/schema/*.json        text eol=lf
 *.sh                      text eol=lf
 *.tmdl                    text eol=lf
 *.pbism                   text eol=lf
